@@ -1,0 +1,68 @@
+version: '3'
+
+networks:
+  vault:
+  
+services:
+
+  vault:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vault
+    hostname: vault-testing.io
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    ports:
+      - 8200:8200
+    volumes:
+      - ./vault/config:/vault/config:Z
+      - ./vault/policies:/vault/policies:Z
+      - ./vault/data:/vault/data:Z
+      - ./vault/logs:/vault/logs:Z
+    environment:
+      - VAULT_ADDR=http://127.0.0.1:8200
+      - VAULT_API_ADDR=http://127.0.0.1:8200
+    command: server -config=/vault/config/vault-config.json
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - boundary
+    depends_on:
+      - consul
+
+  consul:
+    build:
+      context: ../consul
+      dockerfile: Dockerfile
+    container_name: consul-main
+    hostname: consul.testing.io
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    ports:
+      - 8500:8500
+    command: agent -server -bind 0.0.0.0 -client 0.0.0.0 -bootstrap-expect 1 -config-file=/consul/config/config.json
+    volumes:
+      - ./consul/config/consul-config.json:/consul/config/config.json:ro
+      - ./consul/data:/consul/data:Z
+    networks:
+      - boundary
+
+  consul-worker:
+    build:
+      context: ../consul
+      dockerfile: Dockerfile
+    container_name: consul-worker
+    hostname: consul-worker.testing.io
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    command: agent -server -join consul -config-file=/consul/config/config.json
+    volumes:
+      - ./consul/config/consul-config.json:/consul/config/config.json:ro
+    networks:
+      - boundary
+    depends_on:
+      - consul
