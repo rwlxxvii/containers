@@ -1,0 +1,63 @@
+[3/3] COMMIT nuclei
+--> feb4e4f1da51
+Successfully tagged localhost/nuclei:latest
+feb4e4f1da517e97a08e3ac7f5dbbf86c812586232e80e70b6eee074bc1a2e3f
+                                                                                                                                                                                      
+┌──(shiftyroot㉿kali-mainsys)-[~/Documents/apps-main/nuclei]
+└─$ podman run --rm -it --name nuclei -d nuclei:latest                                    
+678d91e073d94c2e164654215b91db784be3361ad5d6e796a2a7f6a857225b6a
+                                                                                                                                                                                      
+┌──(shiftyroot㉿kali-mainsys)-[~/Documents/apps-main/nuclei]
+└─$ podman exec nuclei nuclei -ut                     
+
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.0.4
+
+                projectdiscovery.io
+
+[INF] nuclei-templates are not installed, installing...
+[INF] Successfully installed nuclei-templates at /home/nuclei/nuclei-templates
+[INF] No new updates found for nuclei templates
+                                                                                                                                                                                      
+┌──(shiftyroot㉿kali-mainsys)-[~/Documents/apps-main/nuclei]
+└─$ podman exec nuclei nuclei -c 35 -ni -u http://testhtml5.vulnweb.com 
+
+                     __     _
+   ____  __  _______/ /__  (_)
+  / __ \/ / / / ___/ / _ \/ /
+ / / / / /_/ / /__/ /  __/ /
+/_/ /_/\__,_/\___/_/\___/_/   v3.0.4
+
+                projectdiscovery.io
+
+[INF] Current nuclei version: v3.0.4 (latest)
+[INF] Current nuclei-templates version: v9.6.9 (latest)
+[INF] New templates added in latest release: 73
+[INF] Templates loaded for current scan: 7277
+[INF] Executing 5264 signed templates from projectdiscovery/nuclei-templates
+[WRN] Executing 2028 unsigned templates. Use with caution.
+[INF] Targets loaded for current scan: 1
+[INF] Templates clustered: 1252 (Reduced 1219 Requests)
+[txt-fingerprint] [dns] [info] testhtml5.vulnweb.com ["v=spf1 -all"]
+[options-method] [http] [info] http://testhtml5.vulnweb.com [HEAD, OPTIONS, GET]
+[nginx-version] [http] [info] http://testhtml5.vulnweb.com [nginx/1.19.0]
+[tech-detect:angularjs] [http] [info] http://testhtml5.vulnweb.com
+[tech-detect:google-font-api] [http] [info] http://testhtml5.vulnweb.com
+[tech-detect:angular] [http] [info] http://testhtml5.vulnweb.com
+[tech-detect:nginx] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:cross-origin-embedder-policy] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:cross-origin-opener-policy] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:cross-origin-resource-policy] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:content-security-policy] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:permissions-policy] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:x-frame-options] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:x-content-type-options] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:x-permitted-cross-domain-policies] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:referrer-policy] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:clear-site-data] [http] [info] http://testhtml5.vulnweb.com
+[http-missing-security-headers:strict-transport-security] [http] [info] http://testhtml5.vulnweb.com
+[missing-sri] [http] [info] http://testhtml5.vulnweb.com/ [http://code.jquery.com/jquery-1.9.1.min.js,http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js,https://ajax.googleapis.com/ajax/libs/angularjs/1.0.6/angular.min.js,http://bxss.s3.amazonaws.com/ad.js]
+[waf-detect:nginxgeneric] [http] [info] http://testhtml5.vulnweb.com/

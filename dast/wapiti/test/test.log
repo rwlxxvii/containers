@@ -1,0 +1,31 @@
+# av scan log
+
+----------- SCAN SUMMARY -----------
+Known viruses: 8678481
+Engine version: 1.0.4
+Scanned directories: 2368
+Scanned files: 15263
+Infected files: 0
+Total errors: 1
+Data scanned: 1034.06 MB
+Data read: 855.96 MB (ratio 1.21:1)
+Time: 95.157 sec (1 m 35 s)
+Start Date: 2023:11:16 17:25:33
+End Date:   2023:11:16 17:27:08
+
+# bin check
+
+[3/3] STEP 13/13: RUN     wapiti --update; 
+
+ ██╗    ██╗ █████╗ ██████╗ ██╗████████╗██╗██████╗
+ ██║    ██║██╔══██╗██╔══██╗██║╚══██╔══╝██║╚════██╗
+ ██║ █╗ ██║███████║██████╔╝██║   ██║   ██║ █████╔╝
+ ██║███╗██║██╔══██║██╔═══╝ ██║   ██║   ██║ ╚═══██╗
+ ╚███╔███╔╝██║  ██║██║     ██║   ██║   ██║██████╔╝
+  ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝     ╚═╝   ╚═╝   ╚═╝╚═════╝  
+Wapiti 3.1.7 (wapiti-scanner.github.io)
+[*] Updating modules
+Updating module wapp
+Updating module nikto
+Updating module htp
+Update done.

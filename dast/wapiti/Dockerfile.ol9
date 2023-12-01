@@ -1,0 +1,124 @@
+FROM docker.io/oraclelinux:9 as build-env
+ENV PYTHONDONTWRITEBYTECODE=1
+# https://snyk.io/login?cta=sign-up&loc=nav&page=support_docs_page
+# To authenticate using your API token:
+#Go to your Snyk account (Account Settings > API Token section).
+#In the KEY field, click click to show; then select and copy your API token. A screenshot follows.
+#In the CLI, run snyk auth [<API_TOKEN>] or snyk config set api=<token>. The <API_TOKEN>is validated by the Snyk API.
+#ENV SNYK_API=
+
+ARG VER=3.1.7
+
+WORKDIR /tmp
+RUN set -eux; \
+    \
+    dnf install -y epel-release dnf-plugins-core; \
+    dnf config-manager --set-enabled ol9_codeready_builder; \
+    dnf update -y; \
+    dnf install -y python3-pip python3-setuptools python3-pip-wheel python3-devel \
+    make automake gcc g++ subversion \
+    cargo wget unzip npm; \
+    wget https://github.com/wapiti-scanner/wapiti/archive/refs/tags/${VER}.zip; \
+    unzip ${VER}.zip
+
+WORKDIR /tmp/wapiti-${VER}
+COPY Pipfile* setup.py pyproj* *spec ./
+
+# install requirements and run snyk scans
+#RUN set -x; \
+#	\
+#    python -m venv wapiti3; \
+#    . wapiti3/bin/activate; \
+#    npm install -g snyk; \
+#    npm install snyk-to-html -g; \
+#    snyk config set api=${SNYK_API}; \
+#    python -m pip install -e .; \
+#    snyk code test --json | snyk-to-html -o /wapiti-code-review.html; \
+#    snyk test --file=setup.py --json | snyk-to-html -o /wapiti-deps.html; \
+#    snyk monitor; \
+#    deactivate; \
+#    npm uninstall -g snyk; \
+#    npm uninstall -g snyk-to-html
+
+#install wapiti
+RUN set -eux; \
+	\
+    python3 -m venv wapiti3; \
+    . wapiti3/bin/activate; \
+    python3 -m pip install --upgrade pip; \  
+    python3 -m pip install .; \
+    dnf remove -y make automake gcc g++ subversion \
+    cargo wget unzip npm; \
+    dnf clean all; \
+    rm -rf /root/.cache/*
+
+FROM oraclelinux:9-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+
+LABEL \
+    org.opencontainers.image.name='Wapiti' \
+    org.opencontainers.image.description='Wapiti allows you to audit the security of your websites or web applications, built in python.' \
+    org.opencontainers.image.usage='https://github.com/wapiti-scanner/wapiti/blob/master/doc/wapiti.ronn' \
+    org.opencontainers.image.url='https://wapiti-scanner.github.io/' \
+    org.opencontainers.image.licenses='GNU General Public License v2.0' \
+    org.opencontainers.image.schema-version='3.1.7'
+
+RUN \
+    microdnf install -y yum-utils; \
+    dnf config-manager --set-enabled ol9_codeready_builder; \
+    microdnf install -y epel-release dnf-plugins-core; \
+    microdnf update -y; \
+    microdnf install -y python3 \
+    			python3-setuptools \
+    			bzip2 \
+       			wget \
+	  		openscap \
+     			scap-security-guide \
+			clamav \
+   			clamav-update; \
+    groupadd -g 65535 wapiti; \
+    useradd -u 65535 -r -g wapiti wapiti -m
+
+#copy over python lib's, wapiti binaries, and synk scan report 
+COPY --chown=wapiti:wapiti --from=build-env /tmp/wapiti-3.1.7/wapiti3/lib/python3.9/ /usr/lib/python3.9/
+COPY --chown=wapiti:wapiti --from=build-env /tmp/wapiti-3.1.7/bin/wapiti /tmp/wapiti-3.1.7/bin/wapiti-getcookie /usr/local/bin/
+#COPY --chown=wapiti:wapiti --from=build-env /wapiti-deps.html /home/wapiti
+#COPY --chown=wapiti:wapiti --from=build-env /wapiti-code-review.html /home/wapiti
+
+# Run hardening script and collect build security artifacts, SCA/Compliance/CVE/AV
+WORKDIR /home/wapiti/artifacts
+ARG SCAP_PROFILE=xccdf_org.ssgproject.content_profile_stig
+ARG SCAP_SNAME=STIG
+ARG BENCHMARK=ssg-ol9-ds.xml
+
+COPY --chmod=755 el9-container-hardening.sh .
+
+RUN \
+    DATE=$(date +"%Y%m%d"); \
+    bash -c "./el9-container-hardening.sh"; \
+    wget https://linux.oracle.com/security/oval/com.oracle.elsa-ol9.xml.bz2; \
+    bzip2 -d com.oracle.elsa-ol9.xml.bz2; \
+    oscap oval eval --report wapiti-ol9-cve-report.html com.oracle.elsa-ol9.xml || :; \
+    oscap xccdf eval --profile ${SCAP_PROFILE} --results wapiti_ol9-${SCAP_SNAME}-scap-report_${DATE}.xml \
+    --report wapiti_ol9-${SCAP_SNAME}-scap-report_${DATE}.html /usr/share/xml/scap/ssg/content/${BENCHMARK} || :; \
+    freshclam; \
+    clamscan -rvi -l AV_Scan_${DATE}.log --exclude-dir="^/sys|^/dev" /; \
+    chown wapiti:wapiti AV_Scan_${DATE}.log; \
+    grep -Hrn FOUND AV_Scan_${DATE}.log; \
+    microdnf remove -y clamav clamav-update openscap scap-security-guide wget bzip2 epel-release dnf-plugins-core; \
+    dnf config-manager --set-disabled ol9_codeready_builder; \
+    microdnf remove -y yum-utils; \
+    microdnf clean all; \
+    rm -rf /var/cache/dnf /var/cache/yum /tmp/* /var/tmp/*; \
+    truncate -s 0 /var/log/*log
+
+WORKDIR /home/wapiti
+USER 65535
+
+#app function check; test scan, generate report.
+RUN set -eux; \
+	\
+    wapiti --update; \
+#    wapiti -v2 -u http://testhtml5.vulnweb.com; \
+#    ls -la /home/wapiti/.wapiti/generated_report
