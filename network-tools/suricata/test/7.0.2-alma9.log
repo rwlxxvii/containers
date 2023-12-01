@@ -1,0 +1,79 @@
+----------- SCAN SUMMARY -----------
+Known viruses: 8679356
+Engine version: 1.0.4
+Scanned directories: 1693
+Scanned files: 9051
+Infected files: 2
+Total errors: 1
+Data scanned: 1055.35 MB
+Data read: 870.46 MB (ratio 1.21:1)
+Time: 106.603 sec (1 m 46 s)
+Start Date: 2023:11:23 16:31:47
+End Date:   2023:11:23 16:33:34
+clamav_scan.log:9046:/var/lib/suricata/rules/suricata.rules: Win.Trojan.R57-2 FOUND
+clamav_scan.log:9049:/var/lib/suricata/update/cache/8e0700ea50a9b19895482ceeb7184597-emerging.rules.tar.gz: Html.Exploit.CVE_2018_8373-6654754-1 FOUND
+
+False positives - reads rules files which contain signature hits (sandbox didn't find anything).
+
+REPOSITORY                      TAG         IMAGE ID      CREATED        SIZE
+localhost/suricata              latest      90f666f5a1d3  2 minutes ago  1.04 GB
+
+# build smoke tests
+[3/3] STEP 6/16: RUN     suricata-update update-sources;     suricata-update enable-source oisf/trafficid;     suricata-update --no-test --no-reload;     /usr/bin/suricata -V
+23/11/2023 -- 16:41:13 - <Info> -- Using data-directory /var/lib/suricata.
+23/11/2023 -- 16:41:13 - <Info> -- Using Suricata configuration /etc/suricata/suricata.yaml
+23/11/2023 -- 16:41:13 - <Info> -- Using /usr/share/suricata/rules for Suricata provided rules.
+23/11/2023 -- 16:41:13 - <Info> -- Found Suricata version 7.0.2 at /usr/bin/suricata.
+23/11/2023 -- 16:41:13 - <Info> -- Downloading https://www.openinfosecfoundation.org/rules/index.yaml
+23/11/2023 -- 16:41:13 - <Info> -- Adding all sources
+23/11/2023 -- 16:41:13 - <Info> -- Saved /var/lib/suricata/update/cache/index.yaml
+23/11/2023 -- 16:41:13 - <Info> -- Using data-directory /var/lib/suricata.
+23/11/2023 -- 16:41:13 - <Info> -- Using Suricata configuration /etc/suricata/suricata.yaml
+23/11/2023 -- 16:41:13 - <Info> -- Using /usr/share/suricata/rules for Suricata provided rules.
+23/11/2023 -- 16:41:13 - <Info> -- Found Suricata version 7.0.2 at /usr/bin/suricata.
+23/11/2023 -- 16:41:13 - <Info> -- Creating directory /var/lib/suricata/update/sources
+23/11/2023 -- 16:41:13 - <Info> -- Enabling default source et/open
+23/11/2023 -- 16:41:13 - <Info> -- Source oisf/trafficid enabled
+23/11/2023 -- 16:41:13 - <Info> -- Using data-directory /var/lib/suricata.
+23/11/2023 -- 16:41:13 - <Info> -- Using Suricata configuration /etc/suricata/suricata.yaml
+23/11/2023 -- 16:41:13 - <Info> -- Using /usr/share/suricata/rules for Suricata provided rules.
+23/11/2023 -- 16:41:13 - <Info> -- Found Suricata version 7.0.2 at /usr/bin/suricata.
+23/11/2023 -- 16:41:13 - <Info> -- Loading /etc/suricata/suricata.yaml
+23/11/2023 -- 16:41:13 - <Info> -- Disabling rules for protocol pgsql
+23/11/2023 -- 16:41:13 - <Info> -- Disabling rules for protocol modbus
+23/11/2023 -- 16:41:13 - <Info> -- Disabling rules for protocol dnp3
+23/11/2023 -- 16:41:13 - <Info> -- Disabling rules for protocol enip
+23/11/2023 -- 16:41:13 - <Info> -- Fetching https://rules.emergingthreats.net/open/suricata-7.0.2/emerging.rules.tar.gz.
+23/11/2023 -- 16:41:14 - <Info> -- Done.
+23/11/2023 -- 16:41:14 - <Info> -- Fetching https://openinfosecfoundation.org/rules/trafficid/trafficid.rules.
+23/11/2023 -- 16:41:14 - <Info> -- Done.
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/app-layer-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/decoder-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/dhcp-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/dnp3-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/dns-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/files.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/http-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/ipsec-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/kerberos-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/modbus-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/nfs-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/ntp-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/smb-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/smtp-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/stream-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Loading distribution rule file /usr/share/suricata/rules/tls-events.rules
+23/11/2023 -- 16:41:14 - <Info> -- Ignoring file rules/emerging-deleted.rules
+23/11/2023 -- 16:41:15 - <Info> -- Loaded 45935 rules.
+23/11/2023 -- 16:41:16 - <Info> -- Disabled 14 rules.
+23/11/2023 -- 16:41:16 - <Info> -- Enabled 0 rules.
+23/11/2023 -- 16:41:16 - <Info> -- Modified 0 rules.
+23/11/2023 -- 16:41:16 - <Info> -- Dropped 0 rules.
+23/11/2023 -- 16:41:16 - <Info> -- Enabled 131 rules for flowbit dependencies.
+23/11/2023 -- 16:41:16 - <Info> -- Creating directory /var/lib/suricata/rules.
+23/11/2023 -- 16:41:16 - <Info> -- Backing up current rules.
+23/11/2023 -- 16:41:16 - <Info> -- Writing rules to /var/lib/suricata/rules/suricata.rules: total: 45935; enabled: 35691; added: 45935; removed 0; modified: 0
+23/11/2023 -- 16:41:16 - <Info> -- Writing /var/lib/suricata/rules/classification.config
+23/11/2023 -- 16:41:16 - <Info> -- Skipping test, disabled by configuration.
+23/11/2023 -- 16:41:16 - <Info> -- Done.
+This is Suricata version 7.0.2 RELEASE

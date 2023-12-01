@@ -1,0 +1,20 @@
+version: '3'
+  
+services:
+
+  suricata:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: suricata-ids.io
+    network_mode: "host"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./:/var/log/suricata:Z
+    environment:
+      - SURICATA_OPTIONS="-i wlo1 -vv"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_NICE
+    restart: unless-stopped
