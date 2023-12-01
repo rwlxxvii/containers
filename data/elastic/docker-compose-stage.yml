@@ -1,0 +1,207 @@
+version: '3'
+
+volumes:
+  esmain-data:
+  elasticsearch-data-1:
+  
+secrets:
+  ca.crt:
+    file: ./secrets/ca/ca/ca.crt
+  elasticsearch.keystore:
+    file: ./secrets/elasticsearch.keystore
+  elastic-stack-ca.p12:
+    file: ./secrets/ca/elastic-stack-ca.p12
+  elasticsearch.key:
+    file: ./secrets/certs/elasticsearch/elasticsearch.key
+  elasticsearch.cert:
+    file: ./secrets/certs/elasticsearch/elasticsearch.crt
+  kibana.key:
+    file: ./secrets/certs/kibana/kibana.key
+  kibana.cert:
+    file: ./secrets/certs/kibana/kibana.crt
+  logstash.pkcs8.key:
+    file: ./secrets/certs/logstash/logstash.pkcs8.key
+  logstash.key:
+    file: ./secrets/certs/logstash/logstash.key
+  logstash.p12:
+    file: ./secrets/keystore/logstash/logstash.p12
+  logstash.cert:
+    file: ./secrets/certs/logstash/logstash.crt
+
+networks:
+  elk:
+  
+services:
+
+  elasticsearch-main:
+    container_name: elasticsearch-main
+    hostname: elasticsearch-main
+    build:
+      context: elasticsearch/
+      args:
+        ELK_VERSION: ${ELK_VERSION}
+    restart: unless-stopped
+    environment:
+      CONFIG_DIR: ${ELASTIC_DIR}/config
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      ELASTIC_CLUSTER_NAME: ${ELASTIC_CLUSTER_NAME}
+      ELASTIC_NODE_NAME: ${ELASTIC_NODE_NAME}
+      ELASTIC_INIT_MASTER_NODE: ${ELASTIC_INIT_MASTER_NODE}
+      ELASTIC_DISCOVERY_SEEDS: ${ELASTIC_DISCOVERY_SEEDS}
+      ES_JAVA_OPTS: "-Xmx${ELASTICSEARCH_HEAP} -Xms${ELASTICSEARCH_HEAP} -Des.enforce.bootstrap.checks=true"
+      bootstrap.memory_lock: "true"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -sf --insecure https://$ELASTIC_USERNAME:${ELASTIC_PASSWORD:-}@localhost:9200/_cat/health | grep -ioE 'green|yellow' || echo 'not green/yellow cluster status'"]
+    volumes:
+      - esmain_data:${ELASTIC_DIR}:Z
+      - ./elasticsearch/config/elasticsearch.yml:${ELASTIC_DIR}/config/elasticsearch.yml:ro
+    secrets:
+      - source: elasticsearch.keystore
+        target: ${ELASTIC_DIR}/config/elasticsearch.keystore
+      - source: ca.crt
+        target: ${ELASTIC_DIR}/config/ca.crt
+      - source: elasticsearch.cert
+        target: ${ELASTIC_DIR}/config/elasticsearch.crt
+      - source: elasticsearch.key
+        target: ${ELASTIC_DIR}/config/elasticsearch.key
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 200000
+        hard: 200000
+    networks:
+      - elk
+    ports:
+      - 9200:9200
+      - 9300:9300
+      
+  elasticsearch-01:
+    container_name: elasticsearch-01
+    hostname: elasticsearch-01
+    build:
+      context: elasticsearch/
+      args:
+        ELK_VERSION: ${ELK_VERSION}
+    restart: unless-stopped
+    environment:
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      ELASTIC_CLUSTER_NAME: ${ELASTIC_CLUSTER_NAME}
+      ELASTIC_NODE_NAME: ${ELASTIC_NODE_NAME_1}
+      ELASTIC_INIT_MASTER_NODE: ${ELASTIC_INIT_MASTER_NODE}
+      ELASTIC_DISCOVERY_SEEDS: ${ELASTIC_DISCOVERY_SEEDS}
+      ES_JAVA_OPTS: -Xmx${ELASTICSEARCH_HEAP} -Xms${ELASTICSEARCH_HEAP} -Des.enforce.bootstrap.checks=true
+      bootstrap.memory_lock: "true"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -sf --insecure https://$ELASTIC_USERNAME:${ELASTIC_PASSWORD:-}@localhost:9200/_cat/health | grep -ioE 'green|yellow' || echo 'not green/yellow cluster status'"]
+    volumes:
+      - elasticsearch-data-1:${ELASTIC_DIR}:Z
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    secrets:
+      - source: elasticsearch.keystore
+        target: /usr/share/elasticsearch/config/elasticsearch.keystore
+      - source: elastic.ca
+        target: /usr/share/elasticsearch/config/certs/ca.crt
+      - source: elasticsearch.certificate
+        target: /usr/share/elasticsearch/config/certs/elasticsearch.crt
+      - source: elasticsearch.key
+        target: /usr/share/elasticsearch/config/certs/elasticsearch.key
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 200000
+        hard: 200000
+    networks:
+      - elk
+    ports:
+      - 9200:9200
+      - 9300:9300
+    depends_on:
+      - elasticsearch-main
+        
+  kibana:
+    container_name: kibana
+    hostname: kibana
+    build:
+      context: kibana/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    restart: unless-stopped
+    volumes:
+      - ./kibana/config/kibana.yml:${KIBANA_DIR}/config/kibana.yml:ro
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      CONFIG_DIR: ${KIBANA_DIR}/config
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      ENCRYPTION_KEY: ${XPACK_ENCRYPTION_KEY}
+      KIBANA_URL: ${KIBANA_URL}
+      ES_JAVA_OPTS: "-Xmx${KIBANA_HEAP} -Xms${KIBANA_HEAP}"
+    secrets:
+      - source: ca.crt
+        target: ${KIBANA_DIR}/config/ca.crt
+      - source: kibana.cert
+        target: ${KIBANA_DIR}/config/kibana.crt
+      - source: kibana.key
+        target: ${KIBANA_DIR}/config/kibana.key
+    networks:
+      - elk
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch-main
+      - elasticsearch-01
+      #- traefik
+    #labels:
+    #  - "traefik.enable=true"
+
+  logstash:
+    container_name: logstash
+    hostname: logstash
+    build:
+      context: logstash/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./logstash/config/logstash.yml:${LOGSTASH_DIR}/config/logstash.yml:ro
+      - ./logstash/pipeline/logstash.conf:${LOGSTASH_DIR}/pipeline/logstash.conf:ro
+      - ./logstash/config/pipelines.yml:${LOGSTASH_DIR}/config/pipelines.yml:ro
+      - ./logstash/pipeline:${LOGSTASH_DIR}/pipeline:Z
+    environment:
+      CONFIG_DIR: ${LOGSTASH_DIR}/config
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      LS_JAVA_OPTS: "-Xmx${LOGSTASH_HEAP} -Xms${LOGSTASH_HEAP}"
+    secrets:
+      - source: ca.crt
+        target: ${LOGSTASH_DIR}/config/ca.crt
+      - source: logstash.cert
+        target: ${LOGSTASH_DIR}/config/logstash.crt
+      - source: logstash.key
+        target: ${LOGSTASH_DIR}/config/logstash.key
+      - source: logstash.pkcs8.key
+        target: ${LOGSTASH_DIR}/config/logstash.pkcs8.key
+      - source: logstash.p12
+        target: ${LOGSTASH_DIR}/config/logstash.p12
+    networks:
+      - elk
+    ports:
+     - 5044:5044
+     - 9600:9600
+    depends_on: 
+      - elasticsearch-main
+      - elasticsearch-01
+      - kibana
+    healthcheck:
+      test: ["CMD", "curl", "-s" ,"-XGET", "http://127.0.0.1:9600"]
+
+

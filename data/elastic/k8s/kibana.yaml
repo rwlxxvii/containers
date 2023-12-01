@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: monitoring
+  labels:
+    app: kibana
+spec:
+  selector:
+    app: kibana
+  ports:
+  - port: 5601
+    name: http 
+---
+apiVersion: v1               
+kind: Service                
+metadata:                    
+  name: kibana-lb        
+  namespace: monitoring
+  labels:                    
+    app: kibana
+spec:                        
+  type: LoadBalancer         
+  selector:                  
+    app: kibana
+  ports:                     
+  - name: http               
+    port: 5601
+    targetPort: 5601               
+    protocol: TCP  
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana
+  namespace: monitoring
+  labels:
+    app: kibana
+data:
+  kibana.yml: |-
+    server.name: kibana
+    server.host: 0.0.0.0
+    elasticsearch.hosts: "http://elasticsearch:9200"
+    monitoring.ui.container.elasticsearch.enabled: true
+    elasticsearch.username: kibana_system
+    elasticsearch.password: ${KIBANA_SYSTEM_PASSWORD}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: monitoring
+  labels:
+    app: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+      - name: kibana
+        image: docker.elastic.co/kibana/kibana:8.5.0
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512M
+          requests:
+            cpu: 50m
+            memory: 256M
+        env:
+          - name: SERVER_UUID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.uid
+          - name: SERVER_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        ports:
+        - containerPort: 5601
+          name: http
+          protocol: TCP
+        readinessProbe:
+            httpGet:
+              path: /app/kibana
+              port: 5601
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 10
+        livenessProbe:
+            tcpSocket:
+              port: 5601
+            initialDelaySeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 10
+        volumeMounts:
+          - name: kibana-settings-config-volume
+            mountPath: /usr/share/kibana/config
+      volumes:
+        - name: kibana-settings-config-volume
+          configMap:
+            name: kibana
+            items:
+              - key: kibana.yml
+                path: kibana.yml

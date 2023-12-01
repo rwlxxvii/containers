@@ -1,0 +1,742 @@
+id: 1ae6d9b0-517a-11ed-8485-87ea80c6b23e
+revision: 3
+outputs:
+  default:
+    type: elasticsearch
+    hosts:
+      - 'https://localhost:9200'
+output_permissions:
+  default:username: 'elastic'
+  password: S{ELASTIC_PASSWORD:-}
+  elastic_agent_monitoring:
+      indices:
+        - names:
+            - logs-elastic_agent.apm_server-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.apm_server-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent.auditbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.auditbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent.cloudbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.cloudbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.elastic_agent-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.endpoint_security-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent.endpoint_security-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent.filebeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.filebeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent.fleet_server-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.fleet_server-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent.heartbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.heartbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent.metricbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.metricbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent.osquerybeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.osquerybeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-elastic_agent.packetbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-elastic_agent.packetbeat-default
+          privileges:
+            - auto_configure
+            - create_doc
+  elastic_agent_checks:
+      cluster:
+        - monitor
+      d16d2400-4996-4e34-9ad3-46c3864f2e45:
+      indices:
+        - names:
+            - logs-system.auth-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-system.syslog-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-system.application-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-system.security-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-system.system-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.cpu-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.diskio-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.filesystem-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.fsstat-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.load-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.memory-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.network-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.process-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.process.summary-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.socket_summary-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-system.uptime-default
+          privileges:
+            - auto_configure
+            - create_doc
+  c9e7b707-7756-4d25-8bfd-f7f05300764f:
+      indices:
+        - names:
+            - logs-suricata.eve-default
+          privileges:
+            - auto_configure
+            - create_doc
+  14487493-29bf-4ccd-b881-5abf68fb2239:
+      indices:
+        - names:
+            - .logs-endpoint.action.responses-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - .logs-endpoint.actions-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-endpoint.alerts-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - .logs-endpoint.diagnostic.collection-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-endpoint.events.file-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-endpoint.events.library-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-endpoint.metadata-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-endpoint.metrics-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-endpoint.events.network-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - metrics-endpoint.policy-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-endpoint.events.process-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-endpoint.events.registry-default
+          privileges:
+            - auto_configure
+            - create_doc
+        - names:
+            - logs-endpoint.events.security-default
+          privileges:
+            - auto_configure
+            - create_doc
+agent:
+  monitoring:
+    enabled: true
+    use_output: default
+    namespace: default
+    logs: true
+    metrics: true
+inputs:
+  - id: logfile-system-d16d2400-4996-4e34-9ad3-46c3864f2e45
+    name: system-1
+    revision: 1
+    type: logfile
+    use_output: default
+    meta:
+      package:
+        name: system
+        version: 1.19.5
+    data_stream:
+      namespace: default
+    streams:
+      - id: logfile-system.auth-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.auth
+          type: logs
+        ignore_older: 72h
+        paths:
+          - /var/log/auth.log*
+          - /var/log/secure*
+        exclude_files:
+          - .gz$
+        multiline:
+          pattern: ^\s
+          match: after
+        tags:
+          - hashicorp-vault-log
+        processors:
+          - add_locale: null
+      - id: logfile-system.syslog-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.syslog
+          type: logs
+        paths:
+          - /var/log/messages*
+          - /var/log/syslog*
+        exclude_files:
+          - .gz$
+        multiline:
+          pattern: ^\s
+          match: after
+        processors:
+          - add_locale: null
+        ignore_older: 72h
+  - id: winlog-system-d16d2400-4996-4e34-9ad3-46c3864f2e45
+    name: system-1
+    revision: 1
+    type: winlog
+    use_output: default
+    meta:
+      package:
+        name: system
+        version: 1.19.5
+    data_stream:
+      namespace: default
+    streams:
+      - id: winlog-system.application-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        name: Application
+        data_stream:
+          dataset: system.application
+          type: logs
+        condition: '${host.platform} == ''windows'''
+        ignore_older: 72h
+      - id: winlog-system.security-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        name: Security
+        data_stream:
+          dataset: system.security
+          type: logs
+        condition: '${host.platform} == ''windows'''
+        ignore_older: 72h
+      - id: winlog-system.system-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        name: System
+        data_stream:
+          dataset: system.system
+          type: logs
+        condition: '${host.platform} == ''windows'''
+        ignore_older: 72h
+  - id: system/metrics-system-d16d2400-4996-4e34-9ad3-46c3864f2e45
+    name: system-1
+    revision: 1
+    type: system/metrics
+    use_output: default
+    meta:
+      package:
+        name: system
+        version: 1.19.5
+    data_stream:
+      namespace: default
+    streams:
+      - id: system/metrics-system.cpu-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.cpu
+          type: metrics
+        metricsets:
+          - cpu
+        cpu.metrics:
+          - percentages
+          - normalized_percentages
+        period: 10s
+      - id: system/metrics-system.diskio-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.diskio
+          type: metrics
+        metricsets:
+          - diskio
+        diskio.include_devices: null
+        period: 10s
+      - id: system/metrics-system.filesystem-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.filesystem
+          type: metrics
+        metricsets:
+          - filesystem
+        period: 1m
+        processors:
+          - drop_event.when.regexp:
+              system.filesystem.mount_point: ^/(sys|cgroup|proc|dev|etc|host|lib|snap)($|/)
+      - id: system/metrics-system.fsstat-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.fsstat
+          type: metrics
+        metricsets:
+          - fsstat
+        period: 1m
+        processors:
+          - drop_event.when.regexp:
+              system.fsstat.mount_point: ^/(sys|cgroup|proc|dev|etc|host|lib|snap)($|/)
+      - id: system/metrics-system.load-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.load
+          type: metrics
+        metricsets:
+          - load
+        condition: '${host.platform} != ''windows'''
+        period: 10s
+      - id: system/metrics-system.memory-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.memory
+          type: metrics
+        metricsets:
+          - memory
+        period: 10s
+      - id: system/metrics-system.network-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.network
+          type: metrics
+        metricsets:
+          - network
+        period: 10s
+        network.interfaces: null
+      - id: system/metrics-system.process-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.process
+          type: metrics
+        metricsets:
+          - process
+        period: 10s
+        process.include_top_n.by_cpu: 5
+        process.include_top_n.by_memory: 5
+        process.cmdline.cache.enabled: true
+        process.cgroups.enabled: false
+        process.include_cpu_ticks: false
+        processes:
+          - .*
+      - id: >-
+          system/metrics-system.process.summary-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.process.summary
+          type: metrics
+        metricsets:
+          - process_summary
+        period: 10s
+      - id: >-
+          system/metrics-system.socket_summary-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.socket_summary
+          type: metrics
+        metricsets:
+          - socket_summary
+        period: 10s
+      - id: system/metrics-system.uptime-d16d2400-4996-4e34-9ad3-46c3864f2e45
+        data_stream:
+          dataset: system.uptime
+          type: metrics
+        metricsets:
+          - uptime
+        period: 10s
+  - id: logfile-suricata-c9e7b707-7756-4d25-8bfd-f7f05300764f
+    name: suricata-1
+    revision: 1
+    type: logfile
+    use_output: default
+    meta:
+      package:
+        name: suricata
+        version: 2.4.2
+    data_stream:
+      namespace: default
+    streams:
+      - id: logfile-suricata.eve-c9e7b707-7756-4d25-8bfd-f7f05300764f
+        data_stream:
+          dataset: suricata.eve
+          type: logs
+        paths:
+          - /home/suricatasvc/suricata/logs/eve.json
+        exclude_files:
+          - .gz$
+        tags:
+          - forwarded
+          - suricata-eve
+        publisher_pipeline.disable_host: true
+  - id: 14487493-29bf-4ccd-b881-5abf68fb2239
+    name: elastic-sec-2
+    revision: 1
+    type: endpoint
+    use_output: default
+    meta:
+      package:
+        name: endpoint
+        version: 8.3.0
+    data_stream:
+      namespace: default
+    artifact_manifest:
+      manifest_version: 1.0.1
+      schema_version: v1
+      artifacts:
+        endpoint-exceptionlist-macos-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-exceptionlist-macos-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-exceptionlist-windows-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-exceptionlist-windows-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-exceptionlist-linux-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-exceptionlist-linux-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-trustlist-macos-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-trustlist-macos-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-trustlist-windows-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-trustlist-windows-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-trustlist-linux-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-trustlist-linux-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-eventfilterlist-macos-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-eventfilterlist-macos-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-eventfilterlist-windows-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-eventfilterlist-windows-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-eventfilterlist-linux-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-eventfilterlist-linux-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-hostisolationexceptionlist-macos-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-hostisolationexceptionlist-macos-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-hostisolationexceptionlist-windows-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-hostisolationexceptionlist-windows-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-hostisolationexceptionlist-linux-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-hostisolationexceptionlist-linux-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-blocklist-macos-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-blocklist-macos-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-blocklist-windows-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-blocklist-windows-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+        endpoint-blocklist-linux-v1:
+          encryption_algorithm: none
+          decoded_sha256: d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          decoded_size: 14
+          encoded_sha256: f8e6afa1d5662f5b37f83337af774b5785b5b7f1daee08b7b00c2d6813874cda
+          encoded_size: 22
+          relative_url: >-
+            /api/fleet/artifacts/endpoint-blocklist-linux-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658
+          compression_algorithm: zlib
+    policy:
+      windows:
+        events:
+          dll_and_driver_load: true
+          dns: true
+          file: true
+          network: true
+          process: true
+          registry: true
+          security: true
+        malware:
+          mode: prevent
+          blocklist: true
+        ransomware:
+          mode: prevent
+          supported: true
+        memory_protection:
+          mode: prevent
+          supported: true
+        behavior_protection:
+          mode: prevent
+          supported: true
+        popup:
+          malware:
+            enabled: true
+            message: ''
+          ransomware:
+            enabled: true
+            message: ''
+          memory_protection:
+            enabled: true
+            message: ''
+          behavior_protection:
+            enabled: true
+            message: ''
+        logging:
+          file: info
+        antivirus_registration:
+          enabled: false
+      mac:
+        events:
+          process: true
+          file: true
+          network: true
+        malware:
+          mode: prevent
+          blocklist: true
+        behavior_protection:
+          mode: prevent
+          supported: true
+        memory_protection:
+          mode: prevent
+          supported: true
+        popup:
+          malware:
+            enabled: true
+            message: ''
+          behavior_protection:
+            enabled: true
+            message: ''
+          memory_protection:
+            enabled: true
+            message: ''
+        logging:
+          file: info
+      linux:
+        events:
+          process: true
+          file: true
+          network: true
+          session_data: false
+        malware:
+          mode: prevent
+          blocklist: true
+        behavior_protection:
+          mode: prevent
+          supported: true
+        memory_protection:
+          mode: prevent
+          supported: true
+        popup:
+          malware:
+            enabled: true
+            message: ''
+          behavior_protection:
+            enabled: true
+            message: ''
+          memory_protection:
+            enabled: true
+            message: ''
+        logging:
+          file: info

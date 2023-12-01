@@ -1,0 +1,91 @@
+http:
+  routers:
+    kibana:
+      entryPoints:
+        - "websecure"
+      rule: "Host(`kibana.domainname.io`, `www.kibana.domainname.io`)"
+      middlewares:
+        - secured
+      tls: {}
+      service: kibana
+  services:
+    kibana:
+      loadBalancer:
+        servers:
+          - url: "https://kibana.domainname.io:5601"
+        passHostHeader: true
+        healthCheck:
+          path: /status
+          interval: 30s
+          timeout: 15s
+          
+  middlewares:
+    443-redirect:
+      redirectScheme:
+        scheme: websecure
+        port: "5601"
+        permanent: true
+#    log4shell-plugin:
+#      plugin:
+#        log4shell:
+#          errorCode: 200
+    default-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+        accessControlMaxAge: 100
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 15552000
+        customFrameOptionsValue: SAMEORIGIN
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+    kibana-whitelist:
+      ipWhiteList:
+        sourceRange:
+        #configure only to accept from certain subnets, more acl's
+        - "192.168.0.0/16"
+    secured:
+      chain:
+        middlewares:
+        - kibana-whitelist
+        - default-headers
+        - 443-redirect
+#    fail2ban:
+#       plugin:
+#         fail2ban:
+#           blacklist:
+#             ip:
+#               - put a subnet here
+#           rules:
+#             action: ""
+#             actionAbuseipdb: ""
+#             backend: ""
+#             banaction: ""
+#             banactionAllports: ""
+#             bantime: 3h
+#             chain: ""
+#             destemail: ""
+#             enabled: "true"
+#             fail2banAgent: ""
+#             filter: ""
+#             findtime: 10m
+#             ignorecommand: ""
+#             logencoding: UTF-8
+#             maxretry: "4"
+#             mode: ""
+#             mta: ""
+#             ports: 0:8000
+#             protocol: ""
+#             sender: ""
+#             urlregexp: ""
+#             usedns: ""
+#           whitelist:
+#              ip:
+#                - ::1
+#                - 127.0.0.1

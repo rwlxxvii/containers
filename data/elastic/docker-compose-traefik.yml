@@ -1,0 +1,51 @@
+version: '3'
+
+networks:
+  elk:
+    name: elk
+    driver: bridge
+
+services:
+
+  traefik:
+    container_name: traefik
+    image: docker.io/traefik:latest
+    hostname: traefik.testing.io
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - elk
+    ports:
+      - 80:80
+      - 443:443
+      #- 8080:8080
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /run/user/<enter $uid here>/podman/podman.sock:/var/run/docker.sock:ro
+      - ./traefik/kibana-config.yml:/etc/traefik/dynamic/kibana-config.yml:ro
+      - ./traefik/traefik.yml:/traefik.yml:ro
+      #- ./traefik/certs/acme.json:/acme.json
+      #offloading for elastic agent
+      - /var/log/traefik/kibana:/var/log/traefik/kibana:Z
+      - /var/log/traefik/kibana:/var/log/traefik/kibana:Z
+      #if using own certs example, ensure to update "tls.yml".
+      - ./traefik/kibana-tls.yml:/etc/traefik/dynamic/kibana-tls.yml:ro
+      - ./traefik/certs/kibana.testing.io.crt:/traefik/certs/kibana.testing.io.crt:ro
+      - ./traefik/certs/kibana.testing.io.key:/traefik/certs/kibana.testing.io.key:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.testing.io`)"
+      - "traefik.http.routers.traefik.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=username:$$hashed$$pass$$/md5/sha1/bcrypt"
+      - "traefik.http.routers.traefik-secure.entrypoints=websecure"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.testing.io`)"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].main=traefik.testing.io"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.traefik.testing.io"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+    restart: unless-stopped

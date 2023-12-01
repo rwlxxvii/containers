@@ -1,0 +1,108 @@
+version: '3'
+
+services:
+
+  # no logstash in this setup, using elastic agent's instead.
+  setup:
+    build:
+      context: setup/
+    init: true
+    volumes:
+      - ./setup/entrypoint.sh:/entrypoint.sh:ro,Z
+      - ./setup/lib.sh:/lib.sh:ro,Z
+      - ./setup/roles:/roles:ro,Z
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
+      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
+      HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD:-}
+      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
+      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    build:
+      context: elasticsearch/
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch:/usr/share/elasticsearch/data:Z
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      discovery.type: single-node
+    networks:
+      - elk
+      
+  kibana:
+    build:
+      context: kibana/
+    volumes:
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    ports:
+      - "5601:5601"
+    environment:
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+    healthcheck:
+      test: ["CMD", "curl", "-s" ,"-XGET", "http://localhost:5601"]
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch 
+      
+#  logstash:
+#    build:
+#      context: logstash/
+#      args:
+#        ELASTIC_VERSION: ${ELASTIC_VERSION}
+#    volumes:
+#      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+#      - ./logstash/pipeline:/usr/share/logstash/pipeline:Z
+#    ports:
+      #add ports here if sending logs this way from external sources
+#      - "50000:50000"
+#      - "5044:5044"
+#      - "9600:9600"
+#    environment:
+#      LS_JAVA_OPTS: -Xms512m -Xmx512m
+#      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+#    healthcheck:
+#      test: ["CMD", "curl", "-s" ,"-XGET", "http://127.0.0.1:9600"]
+#    networks:
+#      - elk
+#    depends_on:
+#      - elasticsearch
+      
+#  fluentd:
+#    build: ./fluentd
+#    volumes:
+#      - ./fluentd/conf:/fluentd/etc:Z
+#    links:
+#      - "elasticsearch"
+#    ports:
+#      - "5140:5140/udp"
+#      - "24224:24224"
+#      - "24224:24224/udp"
+#    networks:
+#      - elk
+#    logging:
+#        driver: "json-file"
+#        options:
+#            max-size: 100m
+#            max-file: "5"
+
+networks:
+  elk:
+
+volumes:
+  setup:
+  elasticsearch:
+    

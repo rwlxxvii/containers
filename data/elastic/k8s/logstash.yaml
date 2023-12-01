@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash-svc
+  namespace: monitoring
+  labels:
+    app: logstash
+spec:
+  type: ClusterIP
+  selector:
+    app: logstash
+  ports:
+  - name: http
+    port: 5044
+    targetPort: 5044
+  - name: api
+    port: 9600
+    targetPort: 9600
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash
+  namespace: monitoring
+  labels:
+    app: logstash
+data:
+  logstash.yml: |-
+    http.host: "0.0.0.0"
+    path.config: /usr/share/logstash/pipeline
+    xpack.monitoring.enabled: true
+    xpack.monitoring.elasticsearch.hosts: "http://elasticsearch:9200"
+  pipeline.conf: |-
+    input {
+      beats {
+        port => 5044
+      }
+    }
+    output {
+      elasticsearch {
+        hosts => ['http://elasticsearch:9200']
+        index => "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+      }
+      stdout { 
+        codec => rubydebug 
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: monitoring
+  labels:
+    app: logstash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:8.5.0
+        resources:
+            limits:
+              memory: "512M"
+              cpu: 1000m
+            requests:
+              memory: "256M"
+              cpu: 100m
+        ports:
+        - containerPort: 5044
+          name: http
+          protocol: TCP
+        - containerPort: 9600
+          name: api
+          protocol: TCP
+        readinessProbe:
+            tcpSocket:
+              port: 5044
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 10
+        livenessProbe:
+            tcpSocket:
+              port: 5044
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 10
+        volumeMounts:
+          - name: logstash-settings-config-volume
+            mountPath: /usr/share/logstash/config
+          - name: logstash-pipeline-config-volume
+            mountPath: /usr/share/logstash/pipeline
+        command:
+        - logstash
+      volumes:
+      - name: logstash-settings-config-volume
+        configMap:
+          name: logstash
+          items:
+            - key: logstash.yml
+              path: logstash.yml
+      - name: logstash-pipeline-config-volume
+        configMap:
+          name: logstash
+          items:
+            - key: pipeline.conf
+              path: pipeline.conf
