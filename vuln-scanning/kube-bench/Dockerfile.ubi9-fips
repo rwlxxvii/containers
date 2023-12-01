@@ -1,0 +1,68 @@
+# syntax=docker/dockerfile:1
+# kube-bench: Checks whether Kubernetes is deployed according to security best practices as defined in the CIS Kubernetes Benchmark.
+ARG repo="docker.io" \
+    base_image="alpine:3.18" \
+    image_hash="48d9183eb12a05c99bcc0bf44a003607b8e941e1d4f41f9ad12bdcc4b5672f86"
+    
+FROM ${repo}/${base_image}@sha256:${image_hash} AS go-builder
+
+ENV GOPATH=/usr/local/bin/go \
+    KBENCH_VER=0.6.17 \
+    SNYK_API=
+
+RUN \
+    apk add --no-cache -t .kbench-deps ca-certificates \
+                                        go \
+                                        git \
+                                        npm; \
+    mkdir -p ${GOPATH}/src/github.com/kube-bench; \
+    cd ${GOPATH}/src/github.com/kube-bench; \
+    git clone --depth 1 --branch v${KBENCH_VER} https://github.com/aquasecurity/kube-bench; \
+#    npm install -g snyk; \
+#    npm install -g snyk-to-html; \
+#    snyk config set api=${SNYK_API}; \
+    cd kube-bench/; \
+#    snyk code test --json | snyk-to-html -o /kbench-code-review.html; \
+#    snyk test --all-projects --json | snyk-to-html -o /kbench-deps.html; \
+#    snyk monitor; \
+    make build-fips; \
+    cp kube-bench ${GOPATH}/bin/kube-bench; \
+    apk del --purge .kbench-deps; \
+    rm -rf /var/cache/apk/*
+
+ARG ubi_image="registry.access.redhat.com/ubi9/ubi-minimal" \
+    ubi_hash="73e786e5ec8b25e7628f760cecb1231f9692344afc0065e8d95b05e720928456"
+    
+FROM ${ubi_image}@sha256:${ubi_hash}
+
+RUN \
+    microdnf install -y yum \
+                        findutils \
+                        openssl; \
+    yum -y update-minimal --security --sec-severity=Moderate --sec-severity=Important --sec-severity=Critical; \
+    yum update -y; \
+    yum install -y glibc \
+                    procps \
+                    jq; \
+    yum clean all; \
+    microdnf remove yum || rpm -e -v yum; \
+    microdnf clean all; \
+    mkdir /host; \
+    rm -rf /var/cache/yum /var/cache/dnf /var/cache/microdnf /tmp/* /var/tmp/*; \
+    truncate -s 0 /var/log/*log
+
+WORKDIR /opt/kube-bench/
+
+ENV PATH=$PATH:/usr/local/mount-from-host/bin \
+    RUNNING_IN_A_CONTAINER=true
+
+COPY --from=go-builder /usr/local/bin/go/src/github.com/kube-bench/kube-bench/LICENSE /licenses/LICENSE
+COPY --chmod=755 --from=go-builder /usr/local/bin/go/bin/kube-bench /usr/local/bin/kube-bench
+COPY --chmod=755 --from=go-builder /usr/local/bin/go/src/github.com/kube-bench/kube-bench/entrypoint.sh .
+COPY --from=go-builder /usr/local/bin/go/src/github.com/kube-bench/kube-bench/cfg/ /host/cfg/
+
+RUN cp /usr/local/bin/kube-bench /host; chown -R 1000:root /host
+
+#ENTRYPOINT [ "./entrypoint.sh" ]
+USER 1000
+CMD [ "sh" ]
