@@ -1,0 +1,54 @@
+---
+- name: Set project_full_path
+ set_fact:
+   project_full_path: "{{ ansible_user_dir }}/{{ sonar.project.src_dir }}"
+
+
+- name: Retrieve Sonar-project properties
+ find:
+   paths: "{{ project_full_path }}"
+   patterns: "sonar-project.properties"
+   file_type: file
+   recurse: true
+ register: sonar_projects
+
+
+- name: Show Sonar-project properties paths
+ debug:
+   msg: "{{ item.path }}"
+ loop: "{{ sonar_projects.files }}"
+ when: sonar_projects.files | length
+
+
+- name: Run sonarqube scanner cli
+ shell: "docker run \
+       --rm \
+       -e SONAR_HOST_URL='{{ sonarqube_url }}' \
+       -e SONAR_LOGIN='{{ sonarqube_token }}' \
+       -v '{{ project_full_path }}:/usr/src' \
+       {{ registry_url }}/dockerhub/sonarsource/sonar-scanner-cli \
+       -Dsonar.projectBaseDir={{ item.path | dirname | relpath(project_full_path) }} \
+       -Dsonar.projectVersion={{ sonarqube_app_version }} "
+ args:
+   chdir: "{{ sonar.project.src_dir }}"
+ loop: "{{ sonar_projects.files }}"
+ when: sonar_projects.files | length
+ register: _sonarqube_result
+ async: 1000
+ poll: 0
+
+
+- name: Wait for sonarqube report to finish
+ async_status:
+   jid: "{{ item.ansible_job_id }}"
+ register: _jobs
+ until: _jobs.finished
+ delay: 1
+ retries: 1000
+ with_items: "{{ _sonarqube_result.results }}"
+
+
+- name: Show sonar projectKey
+ shell: "grep 'projectKey' {{ item.path }} | cut -d'=' -f2"
+ with_items: "{{sonar_projects.files}}"
+ register: "projectKeys"

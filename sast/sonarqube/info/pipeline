@@ -1,0 +1,35 @@
+pipeline {
+agent any
+tools {nodejs "nodenv"}
+stages {
+ stage("Code Checkout from GitLab") {
+  steps {
+   git branch: 'master',
+    credentialsId: 'gitlab_access_token',
+    url: 'https://gitlab.domainname.io:50443/root/test-project.git'
+  }
+ }
+   stage('Code Quality Check via SonarQube') {
+   steps {
+       script {
+       def scannerHome = tool 'sonarqube';
+           withSonarQubeEnv("sonarqube-container") {
+           sh "${tool("sonarqube")}/bin/sonar-scanner \
+           -Dsonar.projectKey=test-node-js \
+           -Dsonar.sources=. \
+           -Dsonar.css.node=. \
+           -Dsonar.host.url=http://sonar.domainname.io:9000 \
+           -Dsonar.login=your-generated-token-from-sonarqube"
+               }
+           }
+       }
+   }
+   stage("Install Project Dependencies") {
+   steps {
+       nodejs(nodeJSInstallationName: 'nodenv'){
+           sh "npm install"
+           }
+       }
+   }
+}
+}
