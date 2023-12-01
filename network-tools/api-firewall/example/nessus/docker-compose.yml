@@ -1,0 +1,73 @@
+# example usage for a local instance of nessus with api-firewall
+# generate CA, ssl cert, and key and place in ${pwd}/certs
+version: '3.8'
+
+networks:
+  tenable:
+    name: tenable
+    driver: bridge
+        
+volumes:
+  nessus_data:
+
+services:
+
+  api-firewall:
+    container_name: api-fw-ingress
+    image: docker.io/wallarm/api-firewall:latest
+    hostname: api-fw.testing.io
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - tenable
+    ports:
+      - 8088:8088
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./Tenable_Platform_API.json:/api-firewall/resources/Tenable_Platform_API.json:ro
+      - ./certs/apifw.testing.io.pem:/api-firewall/certs/apifw.testing.io.pem:ro
+      - ./certs/apifw.testing.io-key.pem:/api-firewall/certs/apifw.testing.io-key.pem:ro
+      - ./certs/nessus.testing.io.crt:/api-firewall/certs/nessus.testing.io.crt:ro
+    environment:
+      APIFW_URL: https://apifw.testing.io:8088
+      APIFW_TLS_CERT_FILE: /api-firewall/certs/apifw.testing.io.pem
+      APIFW_TLS_CERT_KEY: /api-firewall/certs/apifw.testing.io-key.pem
+      APIFW_SERVER_URL: https://nessus.testing.io:8834
+      APIFW_SERVER_INSECURE_CONNECTION: false
+      APIFW_SERVER_ROOT_CA: /api-firewall/certs/nessus.testing.io.pem
+      APIFW_API_SPECS: /api-firewall/resources/Tenable_Platform_API.json
+      APIFW_REQUEST_VALIDATION: BLOCK
+      APIFW_RESPONSE_VALIDATION: BLOCK
+      APIFW_LOG_FORMAT: JSON
+    stop_grace_period: 1s
+    restart: on-failure
+        
+  nessus:
+    container_name: nessus
+    image: tenableofficial/nessus
+    hostname: nessus.testing.io
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - tenable
+    ports:
+      - 8834:8834
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./certs/nessus.testing.io.key:/certs/nessus.testing.io.key:ro
+      - ./certs/nessus.testing.io.crt:/certs/nessus.testing.io.crt:ro
+      - ./certs/ca.crt:/certs/ca.crt:ro
+      - nessus_data:/opt/nessus/var/nessus:Z
+    environment:
+      USERNAME: ${NESSUS_USERNAME}
+      PASSWORD: ${NESSUS_PASSWORD:-}
+      ACTIVATION_CODE: ${ACTIVATION_CODE}
+      AUTO_UPDATE: all
+    command:
+      - bash
+      - -c
+      - |
+        /opt/nessus/sbin/nessuscli import-certs --serverkey=/certs/nessus.testing.io.key --servercert=/certs/nessus.testing.io.crt --cacert=/certs/ca.crt
+    restart: unless-stopped
+    depends_on:
+      - api-firewall

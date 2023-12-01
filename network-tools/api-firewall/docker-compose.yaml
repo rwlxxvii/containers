@@ -1,0 +1,46 @@
+version: '3.8'
+
+networks:
+  api-firewall-network:
+    name: api-firewall-network
+
+services:
+  api-firewall:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-firewall
+    restart: on-failure
+    environment:
+      APIFW_URL: "http://0.0.0.0:8080"
+      APIFW_API_SPECS: "/opt/resources/<OpenAPI3-spec>.json"
+      # APIFW_API_SPECS: "/opt/resources/httpbin-with-constraints.json"
+      APIFW_SERVER_URL: "http://backend:80"
+      APIFW_SERVER_MAX_CONNS_PER_HOST: "512"
+      APIFW_SERVER_READ_TIMEOUT: "5s"
+      APIFW_SERVER_WRITE_TIMEOUT: "5s"
+      APIFW_SERVER_DIAL_TIMEOUT: "200ms"
+      APIFW_REQUEST_VALIDATION: "BLOCK"
+      APIFW_RESPONSE_VALIDATION: "BLOCK"
+      # Denylist: Token
+      APIFW_DENYLIST_TOKENS_FILE: "/opt/resources/tokens.denylist.db"
+      APIFW_DENYLIST_TOKENS_COOKIE_NAME: "test"
+      APIFW_DENYLIST_TOKENS_HEADER_NAME: ""
+      APIFW_DENYLIST_TOKENS_TRIM_BEARER_PREFIX: "true"
+    volumes:
+      - ./<some openapi3 spec>:/opt/resources:ro
+      - ./tokens.denylist.db:/opt/resources:ro
+    ports:
+      - "8080:8080"
+    stop_grace_period: 1s
+    networks:
+      - api-firewall-network
+  backend:
+    container_name: some backend api service
+    image: some api docker image
+    restart: on-failure
+    ports:
+      - 8090:8090
+    stop_grace_period: 1s
+    networks:
+      - api-firewall-network
