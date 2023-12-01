@@ -1,0 +1,44 @@
+# clamav scan results
+
+----------- SCAN SUMMARY -----------
+Known viruses: 8676821
+Engine version: 1.2.0
+Scanned directories: 11540
+Scanned files: 49233
+Infected files: 0
+Total errors: 1
+Data scanned: 5466.71 MB
+Data read: 2978.43 MB (ratio 1.84:1)
+Time: 1027.829 sec (17 m 7 s)
+Start Date: 2023:10:26 22:49:56
+End Date:   2023:10:26 23:07:04
+
+
+# binary checks
+
+REPOSITORY                TAG         IMAGE ID      CREATED             SIZE
+localhost/anchore         latest      3287ff14161f  About a minute ago  177 MB
+
+[shiftyroot@mainsys-io anchore]$ podman exec anchore syft version
+Application: syft
+Version:    [not provided]
+BuildDate:  [not provided]
+GitCommit:  [not provided]
+GitDescription: [not provided]
+Platform:   linux/amd64
+GoVersion:  go1.21.3
+Compiler:   gc
+
+[shiftyroot@mainsys-io anchore]$ podman exec anchore grype version
+Application:         grype
+Version:             [not provided]
+BuildDate:           [not provided]
+GitCommit:           [not provided]
+GitDescription:      [not provided]
+Platform:            linux/amd64
+GoVersion:           go1.21.3
+Compiler:            gc
+Syft Version:        v0.94.0
+Supported DB Schema: 5
+
+
