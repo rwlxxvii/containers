@@ -1,0 +1,53 @@
+version: '3'
+
+networks:
+  tenable:
+    name: tenable
+    driver: bridge
+    
+services:
+
+  traefik:
+    container_name: traefik
+    image: docker.io/traefik:latest
+    hostname: traefik.testing.io
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - tenable
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      # systemctl --user enable podman.socket
+      - /run/user/<$uid>/podman/podman.sock:/var/run/docker.sock:ro
+      - ./traefik/nessus-config.yml:/etc/traefik/dynamic/nessus-config.yml:ro
+      - ./traefik/apifw-config.yml:/etc/traefik/dynamic/apifw-config.yml:ro
+      - ./traefik/traefik.yml:/traefik.yml:ro
+      #- ./traefik/certs/acme.json:/acme.json
+      #if using own certs example, ensure to update "tls.yml".
+      - ./traefik/nessus-tls.yml:/etc/traefik/dynamic/nessus-tls.yml:ro
+      - ./traefik/certs/nessus.testing.io.crt:/traefik/certs/nessus.testing.io.crt:ro
+      - ./traefik/certs/nessus.testing.io.key:/traefik/certs/nessus.testing.io.key:ro
+      - ./traefik/apifw-tls.yml:/etc/traefik/dynamic/apifw-tls.yml:ro
+      - ./traefik/certs/apifw.testing.io.crt:/traefik/certs/apifw.testing.io.crt:ro
+      - ./traefik/certs/apifw.testing.io.key:/traefik/certs/apifw.testing.io.key:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.testing.io`)"
+      - "traefik.http.routers.traefik.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=username:$$hashed$$pass$$/md5/sha1/bcrypt"
+      - "traefik.http.routers.traefik-secure.entrypoints=websecure"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.testing.io`)"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].main=traefik.testing.io"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.traefik.testing.io"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+    restart: unless-stopped

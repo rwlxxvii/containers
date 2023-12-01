@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+
+  nessus:
+    container_name: nessus
+    image: tenableofficial/nessus
+    hostname: nessus.testing.io
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      USERNAME: ${NESSUS_USERNAME}
+      PASSWORD: ${NESSUS_PASSWORD:-}
+      ACTIVATION_CODE: ${ACTIVATION_CODE:-}
+      AUTO_UPDATE: all
+      #for a tenable.io managed scanner
+      #LINKING_KEY: ${IO_KEY:-}
+      #MANAGER_HOST: cloud.tenable.com
+      #MANAGER_PORT: 443
+      #PROXY_PORT: ${PROXY_PORT}
+      #PROXY_USER: ${PROXY_USER}
+      #PROXY_PASS: ${PROXY_PASS:-}
+    networks:
+      - tenable
+    ports:
+      - 8834:8834
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - nessus_data:/opt/nessus/var/nessus:Z
+    restart: unless-stopped
+    
+networks:
+  tenable:
+    name: tenable
+    driver: bridge
+
+volumes:
+  nessus_data:

@@ -1,0 +1,72 @@
+version: '3'
+
+services:
+
+  nginx:
+    container_name: nginx
+    image: bitnami/nginx
+    hostname: nginx.testing.io
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - tenable
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./nginx-access-logs/:/var/log/nginx/:z
+      - ./nginx/nessus.testing.io.crt:/etc/ssl/certs/nessus.testing.io.crt:ro
+      - ./nginx/nessus.testing.io.key:/etc/ssl/private/nessus.testing.io.key:ro
+      #sudo openssl dhparam -out ./nginx/dhparam.pem 2048
+      - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
+      - ./nginx/ssl-params.conf:/etc/nginx/snippets/ssl-params.conf:ro
+      - ./nginx/nessus.testing.io:/etc/nginx/sites-available/nessus.testing.io:ro
+    command: sh -c 'sleep 5m && while true; do
+             ln -s /etc/nginx/sites-available/nessus.testing.io /etc/nginx/sites-enabled/nessus.testing.io
+             && nginx -s reload; done'
+    #labels:
+    #  - "traefik.enable=true"
+    restart: on-failure
+      
+  nessus:
+    container_name: nessus
+    image: tenableofficial/nessus
+    hostname: nessus.testing.io
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      USERNAME: ${NESSUS_USERNAME}
+      PASSWORD: ${NESSUS_PASSWORD:-}
+      ACTIVATION_CODE: ${ACTIVATION_CODE}
+      AUTO_UPDATE: all      
+      #for a tenable.io managed scanner
+      #LINKING_KEY: ${IO_KEY:-}
+      #MANAGER_HOST: cloud.tenable.com
+      #MANAGER_PORT: 443
+      #PROXY_PORT:
+      #PROXY_USER:
+      #PROXY_PASS: 
+    command: sh -c 'sleep 10m && while true; do dnf update -y; done'
+    networks:
+      - tenable
+    ports:
+      - 8834:8834
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./certs/nessus.testing.io.key:/certs/nessus.testing.io.key:ro
+      - ./certs/nessus.testing.io.crt:/certs/nessus.testing.io.crt:ro
+      - ./certs/ca.crt:/certs/ca.crt:ro
+      - nessus_data:/opt/nessus/var/nessus:Z
+    restart: on-failure
+    #labels:
+    #  - "traefik.enable=true"
+    depends_on: nginx
+      
+networks:
+  tenable:
+    name: tenable
+    driver: bridge
+
+volumes:
+  nessus_data:
