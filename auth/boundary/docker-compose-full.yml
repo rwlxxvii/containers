@@ -1,0 +1,81 @@
+version: '3'
+
+volumes:
+  boundary_db:
+  postgresql_data:
+  
+networks:
+  boundary:
+  
+services:
+  postgres:
+    image: docker.io/bitnami/postgresql:latest
+    container_name: postgres-boundary
+    hostname: postgres-boundary.testing.io
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASS}
+      - POSTGRES_DB=boundary
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - boundary_db:/var/lib/postgresql:z
+      - postgresql_data:/var/lib/postgresql/data:Z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    networks:
+      - boundary
+      
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: boundary-db-init
+    hostname: boundary-init.testing.io
+    command: ["database", "init", "-config", "/boundary/boundary.hcl"]
+    volumes:
+      - "${PWD}/:/boundary:ro,z"
+    environment:
+      - BOUNDARY_POSTGRES_URL=postgresql://boundary:${DB_PASS}@${PSQL_IP}:5432/boundary?sslmode=disable
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - boundary
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  boundary:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: boundary-main
+    hostname: boundary.testing.io
+    security_opt:
+      - no-new-privileges:true
+    command: ["server", "-config", "/boundary/boundary.hcl"]
+    volumes:
+      - "${PWD}/:/boundary/"
+    ports:
+      - "9200:9200"
+      - "9201:9201"
+      - "9202:9202"
+    environment:
+      - BOUNDARY_POSTGRES_URL=postgresql://boundary:${DB_PASS}@${PSQL_IP}:5432/boundary?sslmode=disable
+    networks:
+      - boundary
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-O-", "http://boundary:9200"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
