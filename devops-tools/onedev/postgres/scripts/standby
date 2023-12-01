@@ -1,0 +1,7 @@
+#!/bin/bash
+set -Eeo pipefail
+if [ "$(id -u)" != "1000" ] ; then exec su-exec postgres "$BASH_SOURCE" "$@"; fi
+
+if [ -s "$PGDATA/PG_VERSION" ]; then exec postgres; fi
+/scripts/recover -R "$@"
+exec postgres
