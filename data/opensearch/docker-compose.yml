@@ -1,0 +1,157 @@
+version: '3'
+
+volumes:
+  opensearch-data1:
+  opensearch-data2:
+
+networks:
+  opensearch-net:
+
+#secrets:
+#  ca.crt:
+#    file: ./secrets/ca/ca/ca.crt
+#  opensearch.keystore:
+#    file: ./secrets/.keystore
+#  opensearch-ca.p12:
+#    file: ./secrets/ca/opensearch-ca.p12
+#  opensearch.key:
+#    file: ./secrets/certs/opensearch/opensearch.key
+#  opensearch.cert:
+#    file: ./secrets/certs/opensearch/opensearch.crt
+#  dashboards.key:
+#    file: ./secrets/certs/dashboards/dashboards.key
+#  dashboards.cert:
+#    file: ./secrets/certs/dashboards/dashboards.crt
+#  data-prepper.pkcs8.key:
+#    file: ./secrets/certs/data-prepper/data-prepper.pkcs8.key
+#  data-prepper.key:
+#    file: ./secrets/certs/data-prepper/data-prepper.key
+#  data-prepper.p12:
+#    file: ./secrets/keystore/data-prepper/data-prepper.p12
+#  data-prepper.cert:
+#    file: ./secrets/certs/data-prepper/data-prepper.crt
+    
+services:
+  setup:
+    build:
+      context: setup/
+    init: true
+    volumes:
+      - ./setup/entrypoint.sh:/entrypoint.sh:ro,Z
+      - ./setup/lib.sh:/lib.sh:ro,Z
+      - ./setup/roles:/roles:ro,Z
+    environment:
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:-}
+      DATAPREPPER_INTERNAL_PASSWORD: ${DATAPREPPER_INTERNAL_PASSWORD:-}
+      DASHBOARDS_SYSTEM_PASSWORD: ${DASHBOARDS_SYSTEM_PASSWORD:-}
+      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
+      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
+      HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD:-}
+      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
+      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
+    networks:
+      - opensearch-net
+    depends_on:
+      - opensearch-node1
+      
+  opensearch-node1:
+    build:
+      context: /opensearch
+    container_name: opensearch-node1
+    hostname: opensearch-node01.io
+    restart: unless-stopped
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+      - cluster.initial_master_nodes=opensearch-node1,opensearch-node2
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data:Z
+    ports:
+      - "9200:9200"
+      - "9600:9600" # required for Performance Analyzer
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -sf --insecure http://$OPENSEARCH_USERNAME:${OPENSEARCH_PASSWORD:-}@localhost:9200/_cat/health | grep -ioE 'green|yellow' || echo 'not green/yellow cluster status'"]
+    networks:
+      - opensearch-net
+      
+  opensearch-node2:
+    build:
+      context: /opensearch
+    container_name: opensearch-node2
+    hostname: opensearch-node02.io
+    restart: unless-stopped
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node2
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+      - cluster.initial_master_nodes=opensearch-node1,opensearch-node2
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data2:/usr/share/opensearch/data:Z
+    ports:
+      - "9200:9200"
+      - "9600:9600" # required for Performance Analyzer
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -sf --insecure http://$OPENSEARCH_USERNAME:${OPENSEARCH_PASSWORD:-}@localhost:9200/_cat/health | grep -ioE 'green|yellow' || echo 'not green/yellow cluster status'"]
+    networks:
+      - opensearch-net
+    depends_on:
+      - opensearch-node1
+      
+  opensearch-dashboards:
+    build:
+      context: /dashboards
+    container_name: opensearch-dashboards
+    hostname: opensearch-dashboards.io
+    restart: unless-stopped
+    ports:
+      - 5601:5601
+    expose:
+      - "5601:5601"
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]' # must be a string with no spaces when specified as an environment variable
+    networks:
+      - opensearch-net
+    depends_on:
+      - opensearch-node2
+
+  data-prepper:
+    build:
+      context: data-prepper/
+    container_name: data-prepper
+    hostname: data-prepper.io
+    restart: unless-stopped
+    volumes:
+      - ./data-prepper/config/data-prepper-config.yml:/usr/share/data-prepper/config/data-prepper-config.yaml:ro
+      - ./data-prepper/config/pipelines.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml:ro
+      # generate pkcs12 format file from opensearch CA
+      - ./data-prepper/config/keystore.p12:/usr/share/data-prepper/keystore.p12:ro
+    ports:
+      - "4900:4900"
+      - "21890:21890"
+    environment:
+      DATAPREPPER_INTERNAL_PASSWORD: ${DATAPREPPER_INTERNAL_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "curl", "-s" ,"-XGET", "http://127.0.0.1:21890"]
+    networks:
+      - opensearch-net
+    depends_on:
+      - opensearch-node1
