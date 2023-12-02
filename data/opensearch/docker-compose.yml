@@ -82,7 +82,7 @@ services:
     volumes:
       - opensearch-data1:/usr/share/opensearch/data:Z
       # modify config before composing up
-      - config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml:ro
+      - opensearch/config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml:ro
     ports:
       - "9200:9200"
       - "9600:9600" # required for Performance Analyzer
@@ -119,7 +119,7 @@ services:
     volumes:
       - opensearch-data2:/usr/share/opensearch/data:Z
       # modify config before composing up
-      - config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml:ro
+      - opensearch/config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml:ro
     ports:
       - "9200:9200"
       - "9600:9600" # required for Performance Analyzer
