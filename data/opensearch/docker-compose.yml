@@ -14,10 +14,14 @@ networks:
 #    file: ./secrets/.keystore
 #  opensearch-ca.p12:
 #    file: ./secrets/ca/opensearch-ca.p12
-#  opensearch.key:
-#    file: ./secrets/certs/opensearch/opensearch.key
-#  opensearch.cert:
-#    file: ./secrets/certs/opensearch/opensearch.crt
+#  opensearch01.key:
+#    file: ./secrets/certs/opensearch/opensearch01.key
+#  opensearch01.cert:
+#    file: ./secrets/certs/opensearch/opensearch01.crt
+#  opensearch02.key:
+#    file: ./secrets/certs/opensearch/opensearch02.key
+#  opensearch02.cert:
+#    file: ./secrets/certs/opensearch/opensearch02.crt
 #  dashboards.key:
 #    file: ./secrets/certs/dashboards/dashboards.key
 #  dashboards.cert:
@@ -87,11 +91,20 @@ services:
       - opensearch-data1:/usr/share/opensearch/data:Z
       # modify config before composing up
       - opensearch/config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml:ro
+#    secrets:
+#      - source: opensearch.keystore
+#        target: /usr/share/opensearch/config/opensearch.keystore
+#      - source: ca.crt
+#        target: /usr/share/opensearch/config/ca.crt
+#      - source: opensearch01.cert
+#        target: /usr/share/opensearch/config/opensearch01.crt
+#      - source: opensearch01.key
+#        target: /usr/share/opensearch/config/opensearch01.key
     ports:
       - "9200:9200"
       - "9600:9600" # required for Performance Analyzer
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -sf --insecure http://$OPENSEARCH_USERNAME:${OPENSEARCH_PASSWORD:-}@localhost:9200/_cat/health | grep -ioE 'green|yellow' || echo 'not green/yellow cluster status'"]
+      test: ["CMD", "sh", "-c", "curl -sf --insecure https://$OPENSEARCH_USERNAME:${OPENSEARCH_PASSWORD:-}@localhost:9200/_cat/health | grep -ioE 'green|yellow' || echo 'not green/yellow cluster status'"]
     networks:
       - opensearch-net
       
@@ -128,11 +141,20 @@ services:
       - opensearch-data2:/usr/share/opensearch/data:Z
       # modify config before composing up
       - opensearch/config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml:ro
+#    secrets:
+#      - source: opensearch.keystore
+#        target: /usr/share/opensearch/config/opensearch.keystore
+#      - source: ca.crt
+#        target: /usr/share/opensearch/config/ca.crt
+#      - source: opensearch02.cert
+#        target: /usr/share/opensearch/config/opensearch02.crt
+#      - source: opensearch02.key
+#        target: /usr/share/opensearch/config/opensearch02.key
     ports:
       - "9200:9200"
       - "9600:9600" # required for Performance Analyzer
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -sf --insecure http://$OPENSEARCH_USERNAME:${OPENSEARCH_PASSWORD:-}@localhost:9200/_cat/health | grep -ioE 'green|yellow' || echo 'not green/yellow cluster status'"]
+      test: ["CMD", "sh", "-c", "curl -sf --insecure https://$OPENSEARCH_USERNAME:${OPENSEARCH_PASSWORD:-}@localhost:9200/_cat/health | grep -ioE 'green|yellow' || echo 'not green/yellow cluster status'"]
     networks:
       - opensearch-net
     depends_on:
@@ -150,6 +172,13 @@ services:
       - "5601:5601"
     environment:
       OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]' # must be a string with no spaces when specified as an environment variable
+#    secrets:
+#      - source: ca.crt
+#        target: /usr/share/opensearch-dashboards/config/ca.crt
+#      - source: dashboards.cert
+#        target: /usr/share/opensearch-dashboards/config/dashboards.crt
+#      - source: dashboards.key
+#        target: /usr/share/opensearch-dashboards/config/dashboards.key
     networks:
       - opensearch-net
     depends_on:
@@ -157,7 +186,7 @@ services:
 
   data-prepper:
     build:
-      context: data-prepper/
+      context: /data-prepper
     container_name: data-prepper
     hostname: data-prepper.io
     restart: unless-stopped
@@ -171,6 +200,17 @@ services:
       - "21890:21890"
     environment:
       DATAPREPPER_INTERNAL_PASSWORD: ${DATAPREPPER_INTERNAL_PASSWORD:-}
+#    secrets:
+#      - source: ca.crt
+#        target: /usr/share/data-prepper/config/ca.crt
+#      - source: data-prepper.cert
+#        target: /usr/share/data-prepper/config/data-prepper.crt
+#      - source: data-prepper.key
+#        target: /usr/share/data-prepper/config/data-prepper.key
+#      - source: data-prepper.pkcs8.key
+#        target: /usr/share/data-prepper/config/data-prepper.pkcs8.key
+#      - source: data-prepper.p12
+#        target: /usr/share/data-prepper/config/data-prepper.p12
     healthcheck:
       test: ["CMD", "curl", "-s" ,"-XGET", "http://127.0.0.1:21890"]
     networks:
