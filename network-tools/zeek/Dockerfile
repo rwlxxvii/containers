@@ -101,11 +101,11 @@ COPY --from=build-env /usr/local/zeek /usr/local/zeek
 COPY local.zeek /usr/local/zeek/share/zeek/site/local.zeek
 COPY --chmod=755 entrypoint.sh .
 
-ENV ZEEKPATH .:/data/config:/usr/local/zeek/share/zeek:/usr/local/zeek/share/zeek/policy:/usr/local/zeek/share/zeek/site \
-    PATH "/usr/local/zeek/bin:${PATH}" \
-    PYTHONPATH "/usr/local/zeek/lib/zeek/python:${PYTHONPATH}" \
-    ZKG_VERSION=2.14.0 \
-    ZEEKCFG_VERSION=0.0.5 \
+ENV ZEEKPATH=".:/data/config:/usr/local/zeek/share/zeek:/usr/local/zeek/share/zeek/policy:/usr/local/zeek/share/zeek/site" \
+    PATH="/usr/local/zeek/bin:${PATH}" \
+    PYTHONPATH="/usr/local/zeek/lib/zeek/python:${PYTHONPATH}" \
+    ZKG_VERSION="2.14.0" \
+    ZEEKCFG_VERSION="0.0.5" \
     ZEEK_DEFAULT_PACKAGES="bro-interface-setup \
     bro-doctor \
     ja3 \
