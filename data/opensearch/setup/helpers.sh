@@ -64,7 +64,7 @@ function check_user_exists {
 	local opensearch_host="${OPENSEARCH_HOST:-opensearch}"
 
 	local -a args=( '-s' '-D-' '-m15' '-w' '%{http_code}'
-		"http://${opensearch_host}:9200/_security/user/${username}"
+		"http://${opensearch_host}:9200/_plugins/_security/api/internalusers/${username}"
 		)
 
 	if [[ -n "${OPENSEARCH_PASSWORD:-}" ]]; then
@@ -100,7 +100,7 @@ function set_user_password {
 	local opensearch_host="${OPENSEARCH_HOST:-opensearch}"
 
 	local -a args=( '-s' '-D-' '-m15' '-w' '%{http_code}'
-		"http://${opensearch_host}:9200/_security/user/${username}/_password"
+		"http://${opensearch_host}:9200/_plugins/_security/api/internalusers/${username}/_password"
 		'-X' 'POST'
 		'-H' 'Content-Type: application/json'
 		'-d' "{\"password\" : \"${password}\"}"
@@ -134,7 +134,7 @@ function create_user {
 	local opensearch_host="${OPENSEARCH_HOST:-opensearch}"
 
 	local -a args=( '-s' '-D-' '-m15' '-w' '%{http_code}'
-		"http://${opensearch_host}:9200/_security/user/${username}"
+		"http://${opensearch_host}:9200/_plugins/_security/api/internalusers/${username}"
 		'-X' 'POST'
 		'-H' 'Content-Type: application/json'
 		'-d' "{\"password\":\"${password}\",\"roles\":[\"${role}\"]}"
@@ -167,7 +167,7 @@ function ensure_role {
 	local opensearch_host="${OPENSEARCH_HOST:-opensearch}"
 
 	local -a args=( '-s' '-D-' '-m15' '-w' '%{http_code}'
-		"http://${opensearch_host}:9200/_security/role/${name}"
+		"http://${opensearch_host}:9200/_plugins/_security/api/roles/${name}"
 		'-X' 'POST'
 		'-H' 'Content-Type: application/json'
 		'-d' "$body"
