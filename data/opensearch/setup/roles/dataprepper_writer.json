@@ -1,4 +1,5 @@
 {
+  "_comment": "migrating to opensearch specific perms/privs - below is elastic"
   "cluster": [
     "manage_index_templates",
     "monitor",
@@ -30,4 +31,30 @@
       ]
     }
   ]
+}
+{
+  "_comment": "migrating to opensearch specific perms/privs - below is opensearch"
+  "cluster_permissions": [
+    "cluster_composite_ops",
+    "indices_monitor"
+  ],
+  "index_permissions": [{
+    "index_patterns": [
+      "movies*"
+    ],
+    "dls": "",
+    "fls": [],
+    "masked_fields": [],
+    "allowed_actions": [
+      "read"
+    ]
+  }],
+  "tenant_permissions": [{
+    "tenant_patterns": [
+      "human_resources"
+    ],
+    "allowed_actions": [
+      "kibana_all_read"
+    ]
+  }]
 }
