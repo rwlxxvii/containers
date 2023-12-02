@@ -166,6 +166,9 @@ services:
     container_name: opensearch-dashboards
     hostname: opensearch-dashboards.io
     restart: unless-stopped
+    volumes:
+    # modify before composing up
+      - dashboards/config/opensearch_dashboards.yml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml:ro
     ports:
       - 5601:5601
     expose:
