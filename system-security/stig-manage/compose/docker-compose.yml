@@ -1,0 +1,102 @@
+# STIG Manager with CAC Authentication
+version: '3'
+
+volumes:
+  mysql-data:
+  keycloak-data:
+  
+networks:
+  stig-man-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${STIGMAN_SUBNET}
+          gateway: ${STIGMAN_GATEWAY}
+  
+services:
+  nginx:
+    image: docker.io/nginx:latest
+    container_name: reverse-proxy
+    hostname: nginx-stig-man
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/sslfrontend/stigman.crt:/etc/nginx/cert.pem:ro
+      - ./certs/sslfrontend/stigman.key:/etc/nginx/privkey.pem:ro
+      - ./certs/dod/Certificates_PKCS7_v5.9_DoD.pem.pem:/etc/nginx/dod-certs.pem:ro
+      - ./nginx/index.html:/usr/share/nginx/html/index.html:ro
+    ports:
+    - "443:443"
+    networks:
+      stig-man-net:
+        ipv4_address: ${NGINX_IPv4}
+    
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak-auth
+    hostname: keycloak-stig-man
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_PROXY: ${KC_PROXY}
+      KC_HOSTNAME_URL: ${KC_HOSTNAME_URL}
+      KC_HOSTNAME_ADMIN_URL: ${KC_HOSTNAME_ADMIN_URL}
+      KC_SPI_X509CERT_LOOKUP_PROVIDER: ${KC_SPI_X509CERT_LOOKUP_PROVIDER}
+      KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT: ${KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT}
+      KC_SPI_TRUSTSTORE_FILE_FILE: ${KC_SPI_TRUSTSTORE_FILE_FILE}
+      KC_SPI_TRUSTSTORE_FILE_PASSWORD: ${KC_SPI_TRUSTSTORE_FILE_PASSWORD}
+    command: start --import-realm
+    volumes:
+      - ./certs/dod/Certificates_PKCS7_v5.9_DoD.pem.p12:/tmp/truststore.p12:ro
+      - ./kc/stigman_realm.json:/opt/keycloak/data/import/stigman_realm.json:ro
+      - ./kc/create-x509-user.jar:/opt/keycloak/providers/create-x509-user.jar:ro
+      - keycloak-data:/opt/keycloak/data/h2:Z
+    networks:
+      stig-man-net:
+        ipv4_address: ${KEYCLOAK_IPv4}
+      
+  stigman:
+    image: nuwcdivnpt/stig-manager:latest
+    container_name: sitg-manager
+    hostname: stig-manager-main
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    environment:
+      STIGMAN_OIDC_PROVIDER: ${STIGMAN_OIDC_PROVIDER}
+      STIGMAN_CLIENT_OIDC_PROVIDER: ${STIGMAN_CLIENT_OIDC_PROVIDER}
+      STIGMAN_CLASSIFICATION: ${STIGMAN_CLASSIFICATION}
+      STIGMAN_DB_HOST: ${STIGMAN_DB_HOST}
+      STIGMAN_DB_USER: ${STIGMAN_DB_USER}
+      STIGMAN_DB_PASSWORD: ${STIGMAN_DB_PASSWORD}
+      STIGMAN_INIT_IMPORT_STIGS: ${STIGMAN_INIT_IMPORT_STIGS}
+    init: true
+    networks:
+      stig-man-net:
+        ipv4_address: ${STIGMAN_IPv4}
+    
+  mysql:
+    image: docker.io/mysql:8.0.35
+    container_name: stig-man-db
+    hostname: mysql-stig-man
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    command: --innodb-buffer-pool-size=512M --sort_buffer_size=64M 
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      stig-man-net:
+        ipv4_address: ${MYSQL_IPv4}
+    
