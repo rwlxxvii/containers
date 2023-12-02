@@ -40,21 +40,28 @@
   ],
   "index_permissions": [{
     "index_patterns": [
-      "movies*"
+      "logs-generic-default",
+      "dataprepper-*",
+      "ecs-dataprepper-*"
     ],
     "dls": "",
     "fls": [],
     "masked_fields": [],
     "allowed_actions": [
-      "read"
+      "write",
+      "create",
+      "create_index",
+      "manage"
     ]
   }],
   "tenant_permissions": [{
     "tenant_patterns": [
-      "human_resources"
+      "dataprepper",
+      "ecs-dataprepper"
     ],
     "allowed_actions": [
-      "kibana_all_read"
+      "write",
+      "manage"
     ]
   }]
 }
