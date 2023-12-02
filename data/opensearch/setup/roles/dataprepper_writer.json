@@ -36,6 +36,7 @@
   "_comment": "migrating to opensearch specific perms/privs - below is opensearch"
   "cluster_permissions": [
     "cluster_composite_ops",
+    "index_template",
     "indices_monitor"
   ],
   "index_permissions": [{
@@ -50,7 +51,6 @@
     "allowed_actions": [
       "write",
       "create",
-      "create_index",
       "manage"
     ]
   }],
