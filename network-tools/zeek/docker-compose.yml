@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  zeek:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    cap_add:
+      - net_raw
+      - net_admin
+    network_mode: host
+
+    volumes:
+      - type: bind
+        source: /etc/localtime
+        target: /etc/localtime
+        read_only: true
+
+      - type: bind
+        source: ${LOGS:-./logs}
+        target: /usr/local/zeek/logs
+
+      - type: bind
+        source: ${NODCFG:-./etc/node.sample.cfg}
+        target: /usr/local/zeek/etc/node.cfg
+
+      - type: bind
+        source: ./etc/networks.cfg
+        target: /usr/local/zeek/etc/networks.cfg
