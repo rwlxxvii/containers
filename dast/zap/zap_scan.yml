@@ -1,0 +1,25 @@
+---
+- hosts: ol9_dasty_box
+  gather_facts: no
+  become: yes
+  become_user: owasp-zap
+  tasks:
+    - name: "ZAP Scans"
+      shell: |
+        DATE=$(date +"%Y%m%d")
+        MODE=http
+        TARGET=testhtml5.vulnweb.com
+        ZAP_API_ALLOW_IP=127.0.0.1
+        RESULT_DIR=/home/owasp-zap
+        mkdir -p ${RESULT_DIR}/owasp-zap/scans
+        genkey() {
+        cat /dev/urandom | tr -cd 'A-Za-z0-9' | fold -w 24 | head -1
+        }
+        podman run --rm -v $(pwd):/zap/wrk/:rw -v /etc/localtime:/etc/localtime:ro -u zap -p 8080:8080 -it --name owasp-zap \
+        -d owasp-zap:v1.0 zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.addrs.addr.name=$ZAP_API_ALLOW_IP \
+        -config api.addrs.addr.regex=true -config api.key=$(genkey)
+        podman network create zap-net
+        podman network connect zap-net owasp-zap
+        podman exec owasp-zap mkdir -p /zap/results
+        podman exec owasp-zap zap-full-scan.py -a -j -t ${MODE}://${TARGET} -r /zap/results/zap-report-${MODE}-${TARGET}-${DATE}.html
+        podman cp owasp-zap:/zap/results/ $RESULT_DIR/owasp-zap/scans

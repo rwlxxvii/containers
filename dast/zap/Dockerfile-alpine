@@ -1,0 +1,117 @@
+# syntax = docker/dockerfile:1.3
+FROM docker.io/alpine:3.17.1 as build-env
+# https://snyk.io/login?cta=sign-up&loc=nav&page=support_docs_page
+# To authenticate using your API token:
+#Go to your Snyk account (Account Settings > API Token section).
+#In the KEY field, click click to show; then select and copy your API token. A screenshot follows.
+#In the CLI, run snyk auth [<API_TOKEN>] or snyk config set api=<token>. The <API_TOKEN>is validated by the Snyk API.
+#ENV SNYK_API=
+
+ENV WEBSWING_VERSION 22.2.4
+ARG WEBSWING_URL=""
+WORKDIR /build
+COPY support configs
+COPY scripts setscripts
+COPY policies setpolicies
+RUN set -eux; \
+	  \
+    apk add --no-cache -t .build-deps \
+    if [ -z "$WEBSWING_URL" ] ; \
+    	  then curl -s -L  "https://dev.webswing.org/files/public/webswing-examples-eval-${WEBSWING_VERSION}-distribution.zip" > webswing.zip; \
+	  else curl -s -L  "$WEBSWING_URL-${WEBSWING_VERSION}-distribution.zip" > webswing.zip; fi; \
+    unzip webswing.zip; \
+    rm -f webswing.zip; \
+    mv webswing-* webswing; \
+    rm -rf webswing/apps/; \
+# static analysis of zaproxy code
+#    wget https://github.com/zaproxy/zaproxy/archive/refs/heads/main.zip; unzip main.zip; \
+#    rm -f main.zip; \
+#    cd zaproxy-main; \
+#    npm install -g snyk; \
+#    npm install -g snyk-to-html; \    
+#    snyk config set api=${SNYK_API}; \
+#    snyk code test --json | snyk-to-html -o /owaspzap-code-review.html; \
+#    snyk test --json | snyk-to-html -o /owaspzap-deps.html; \
+#    snyk monitor; \
+#    npm uninstall snyk; \
+#    npm uninstall snyk-to-html; \
+#    rm -rf ../zaproxy-main; \  
+    apk del --purge .build-deps; \
+    rm -rf /var/cache/apk/*
+
+FROM alpine:3.18.3
+RUN set -eux; \
+	  \
+    apk add --no-cache \
+    make automake autoconf \
+    bash gcc g++ \
+    openjdk11-jre \
+    wget curl \
+    xmlstarlet \
+    unzip git \
+    openbox \
+    xterm \
+    net-tools \
+    python3 \
+    py3-pip \
+    firefox-esr \
+    xvfb x11vnc; \
+#    clamav freshclam; \
+    python -m pip install --no-cache-dir --upgrade awscli pip python-owasp-zap-v2.4 pyyaml urllib3; \
+    rm -rf /var/cache/apk/* /root/.cache
+
+RUN set -eux; \
+	\
+    addgroup -g 1000 zap; \
+    adduser --uid 1000 -h /home/zap --disabled-password \
+    --shell /bin/bash --ingroup zap zap; \
+    mkdir /zap && chown zap:zap /zap; \
+    mkdir /home/zap/.vnc
+
+#run AV scan
+#RUN set -x; \
+#    	\
+#    freshclam; \
+#    clamscan -r -v -i -l /home/zap/last_scan.log --exclude-dir="^/sys" /; \
+#    grep -Hrn FOUND /home/zap/last_scan.log; sleep 5s; \
+#    apk del clamav freshclam
+
+WORKDIR /zap
+RUN set -eux; \
+	\
+    wget -qO- https://raw.githubusercontent.com/zaproxy/zap-admin/master/ZapVersions.xml | xmlstarlet sel -t -v //url |grep -i Linux | wget --content-disposition -i - -O - | tar zxv; \
+    mv ZAP*/* .; \
+    rm -R ZAP*; \
+    ./zap.sh -cmd -silent -addonupdate; \
+    cp /root/.ZAP/plugin/*.zap plugin/ || :
+    
+COPY --chown=1000:1000 --from=build-env /build .
+COPY --chown=1000:1000 --from=build-env /build/webswing /zap/webswing
+#COPY --chown=1000:1000 --from=build-env /*.html /home/zap/
+COPY --chown=1000:1000 --from=build-env /build/configs/zap* /zap/
+COPY --chown=1000:1000 --from=build-env /build/configs/webswing* /zap/webswing/
+COPY --chown=1000:1000 --from=build-env /build/configs/.xinitrc /home/zap/
+COPY --chown=1000:1000 --from=build-env /build/setpolicies /home/zap/.ZAP/policies/
+COPY --chown=1000:1000 --from=build-env /build/setpolicies /root/.ZAP/policies/
+COPY --chown=1000:1000 --from=build-env /build/setscripts /home/zap/.ZAP_D/scripts/
+
+#fix perms
+RUN set -eux; \
+	\
+    chmod -R u=rwx,go=rx /zap; \
+    chmod -R u=rwx,go=rx /home/zap; \
+    chown -R 1000:1000 /usr/lib/jvm/java-11-openjdk; \
+    chmod -R u=rwx,go=rx /usr/lib/jvm/java-11-openjdk
+
+ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk
+ENV PATH $JAVA_HOME/bin:/zap/:$PATH
+ENV ZAP_PATH /zap/zap.sh
+ENV ZAP_PORT 8080
+ENV IS_CONTAINERIZED true
+ENV HOME /home/zap/
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+USER zap
+RUN echo "zap2docker-stable" > /zap/container && \
+    chmod a+x /home/zap/.xinitrc
