@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 # nuclei: Fast and customizable vulnerability scanner based on simple YAML based DSL.
 ARG repo="docker.io" \
-    base_image="alpine:edge" \
-    image_hash="3e44438281baf26907675b99c9a4a421c4d4a57c954120327e703aa8329086bd"
+    base_image="alpine:3.18" \
+    image_hash="d695c3de6fcd8cfe3a6222b0358425d40adfd129a8a47c3416faff1a8aece389"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
