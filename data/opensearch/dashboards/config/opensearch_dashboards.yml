@@ -11,9 +11,6 @@ opensearch.username: "DASHBOARDS_OPENSEARCH_USER"
 opensearch.password: "DASHBOARDS_OPENSEARCH_PASSWORD"
 data_source.enabled: false
 
-# The URLs of the OpenSearch instances to use for all your queries.
-opensearch.hosts: ["http://localhost:9200"]
-
 # OpenSearch Dashboards uses an index in OpenSearch to store saved searches, visualizations and
 # dashboards. OpenSearch Dashboards creates a new index if the index doesn't already exist.
 opensearchDashboards.index: ".opensearch_dashboards"

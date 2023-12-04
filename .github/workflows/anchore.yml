@@ -1,0 +1,130 @@
+name: Anchore Syft/Grype SBOM scan 
+
+on:
+  push:
+    branches: [ "test" ]
+    paths:
+      - vuln-scanning/anchore/Dockerfile
+      - dast/nuclei/Dockerfile
+      - vuln-scanning/terrascan/Dockerfile
+      - vuln-scanning/trivy/Dockerfile
+      
+permissions:
+  contents: write
+
+jobs:
+  anchore-Build-Scan:
+    permissions:
+      contents: write # required to upload to the Dependency submission API
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file anchore/Dockerfile --tag localbuild/anchore:latest
+    - name: Scan the image and upload dependency results
+      uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
+      with:
+        image: "localbuild/anchore:latest"
+        artifact-name: anchore-image.spdx.json
+        dependency-snapshot: true
+        path: anchore/anchore-image.spdx.json
+    - name: Scan SBOM with Grype
+      uses: anchore/scan-action@v3
+      with:
+        sbom: "anchore-image.spdx.json"
+        fail-build: false
+    - name: upload Anchore scan SARIF report
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
+    - name: Inspect action SARIF report
+      run: cat ${{ steps.scan.outputs.sarif }}
+      
+  nuclei-Build-Scan:
+    permissions:
+      contents: write # required to upload to the Dependency submission API
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file nuclei/Dockerfile --tag localbuild/nuclei:latest
+    - name: Scan the image and upload dependency results
+      uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
+      with:
+        image: "localbuild/nuclei:latest"
+        artifact-name: nuclei-image.spdx.json
+        dependency-snapshot: true
+        path: nuclei/nuclei-image.spdx.json
+    - name: Scan SBOM with Grype
+      uses: anchore/scan-action@v3
+      with:
+        sbom: "nuclei-image.spdx.json"
+        fail-build: false
+    - name: upload Anchore scan SARIF report
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
+    - name: Inspect action SARIF report
+      run: cat ${{ steps.scan.outputs.sarif }}
+      
+  terrascan-Build-Scan:
+    permissions:
+      contents: write # required to upload to the Dependency submission API
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file terrascan/Dockerfile --tag localbuild/terrascan:latest
+    - name: Scan the image and upload dependency results
+      uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
+      with:
+        image: "localbuild/terrascan:latest"
+        artifact-name: terrascan-image.spdx.json
+        dependency-snapshot: true
+        path: terrascan/terrascan-image.spdx.json
+    - name: Scan SBOM with Grype
+      uses: anchore/scan-action@v3
+      with:
+        sbom: "terrascan-image.spdx.json"
+        fail-build: false
+    - name: upload Anchore scan SARIF report
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
+    - name: Inspect action SARIF report
+      run: cat ${{ steps.scan.outputs.sarif }}
+  
+  trivy-Build-Scan:
+    permissions:
+      contents: write # required to upload to the Dependency submission API
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file trivy/Dockerfile --tag localbuild/trivy:latest
+    - name: Scan the image and upload dependency results
+      uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
+      with:
+        image: "localbuild/trivy:latest"
+        artifact-name: trivy-image.spdx.json
+        dependency-snapshot: true
+        path: trivy/trivy-image.spdx.json
+    - name: Scan SBOM with Grype
+      uses: anchore/scan-action@v3
+      with:
+        sbom: "trivy-image.spdx.json"
+        fail-build: false
+    - name: upload Anchore scan SARIF report
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
+    - name: Inspect action SARIF report
+      run: cat ${{ steps.scan.outputs.sarif }}
