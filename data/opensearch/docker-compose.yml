@@ -102,8 +102,6 @@ services:
         hard: 65536
     volumes:
       - opensearch-data1:/usr/share/opensearch/data:Z
-      # modify config before composing up
-      - opensearch/config/opensearch.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/opensearch.yml:ro
 #    secrets:
 #      - source: opensearch.keystore
 #        target: /usr/share/opensearch/config/opensearch.keystore
@@ -156,8 +154,6 @@ services:
         hard: 65536
     volumes:
       - opensearch-data2:/usr/share/opensearch/data:Z
-      # modify config before composing up
-      - opensearch/config/opensearch.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/opensearch.yml:ro
 #    secrets:
 #      - source: opensearch.keystore
 #        target: /usr/share/opensearch/config/opensearch.keystore
@@ -190,6 +186,8 @@ services:
     volumes:
     # modify before composing up
       - dashboards/config/opensearch_dashboards.yml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml:ro
+    # modify config before composing up
+      - opensearch/config/opensearch.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/opensearch.yml:ro
     ports:
       - 5601:5601
     expose:
