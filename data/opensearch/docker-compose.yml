@@ -34,7 +34,15 @@ networks:
 #    file: ./secrets/keystore/data-prepper/data-prepper.p12
 #  data-prepper.cert:
 #    file: ./secrets/certs/data-prepper/data-prepper.crt
-    
+#  logstash.pkcs8.key:
+#    file: ./secrets/certs/logstash/logstash.pkcs8.key
+#  logstash.key:
+#    file: ./secrets/certs/logstash/logstash.key
+#  logstash.p12:
+#    file: ./secrets/keystore/logstash/logstash.p12
+#  logstash.cert:
+#    file: ./secrets/certs/logstash/logstash.crt
+
 services:
   setup:
     build:
@@ -48,6 +56,7 @@ services:
       OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD:-}
       DATAPREPPER_INTERNAL_PASSWORD: ${DATAPREPPER_INTERNAL_PASSWORD:-}
       DASHBOARDS_SYSTEM_PASSWORD: ${DASHBOARDS_SYSTEM_PASSWORD:-}
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
       METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
       FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
       HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD:-}
@@ -61,25 +70,29 @@ services:
   opensearch-node1:
     build:
       context: /opensearch
+      args:
+        OPENSEARCH_VERSION: ${OPENSEARCH_VERSION}
     container_name: opensearch-node1
     hostname: opensearch-node01.io
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
-      - cluster.name: opensearch-cluster
-      - node.name: opensearch-node1
-      - http.cors.enabled: true
-      - http.cors.allow-origin: "*"
-      - http.cors.allow-methods: "OPTIONS, HEAD, GET, POST, PUT, DELETE"
-      - http.cors.allow-headers: "kbn-version, Origin, X-Requested-With, Content-Type, Accept, Engaged-Auth-Token Authorization"
-      - discovery.seed_hosts: opensearch-node1,opensearch-node2
-      - cluster.initial_master_nodes: opensearch-node1,opensearch-node2
-      - bootstrap.memory_lock: true # along with the memlock settings below, disables swapping
-      - cluster.routing.allocation.disk.threshold_enabled: false
-      - cluster.routing.allocation.node_initial_primaries_recoveries: 8
-      - indices.query.bool.max_clause_count: 4096
-      - logger.level: WARN
-      - "MAX_LOCKED_MEMORY=unlimited"
-      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+      cluster.name: opensearch-cluster
+      node.name: opensearch-node1
+      http.cors.enabled: true
+      http.cors.allow-origin: "*"
+      http.cors.allow-methods: "OPTIONS, HEAD, GET, POST, PUT, DELETE"
+      http.cors.allow-headers: "kbn-version, Origin, X-Requested-With, Content-Type, Accept, Engaged-Auth-Token Authorization"
+      discovery.seed_hosts: opensearch-node1,opensearch-node2
+      cluster.initial_master_nodes: opensearch-node1,opensearch-node2
+      bootstrap.memory_lock: true # along with the memlock settings below, disables swapping
+      cluster.routing.allocation.disk.threshold_enabled: false
+      cluster.routing.allocation.node_initial_primaries_recoveries: 8
+      indices.query.bool.max_clause_count: 4096
+      logger.level: WARN
+      MAX_LOCKED_MEMORY: unlimited
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
     ulimits:
       memlock:
         soft: -1
@@ -111,25 +124,29 @@ services:
   opensearch-node2:
     build:
       context: /opensearch
+      args:
+        OPENSEARCH_VERSION: ${OPENSEARCH_VERSION}
     container_name: opensearch-node2
     hostname: opensearch-node02.io
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
-      - cluster.name: opensearch-cluster
-      - node.name: opensearch-node2
-      - http.cors.enabled: true
-      - http.cors.allow-origin: "*"
-      - http.cors.allow-methods: "OPTIONS, HEAD, GET, POST, PUT, DELETE"
-      - http.cors.allow-headers: "kbn-version, Origin, X-Requested-With, Content-Type, Accept, Engaged-Auth-Token Authorization"
-      - discovery.seed_hosts: opensearch-node1,opensearch-node2
-      - cluster.initial_master_nodes: opensearch-node1,opensearch-node2
-      - bootstrap.memory_lock: true
-      - cluster.routing.allocation.disk.threshold_enabled: false
-      - cluster.routing.allocation.node_initial_primaries_recoveries: 8
-      - indices.query.bool.max_clause_count: 4096
-      - logger.level: WARN
-      - "MAX_LOCKED_MEMORY=unlimited"
-      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      cluster.name: opensearch-cluster
+      node.name: opensearch-node2
+      http.cors.enabled: true
+      http.cors.allow-origin: "*"
+      http.cors.allow-methods: "OPTIONS, HEAD, GET, POST, PUT, DELETE"
+      http.cors.allow-headers: "kbn-version, Origin, X-Requested-With, Content-Type, Accept, Engaged-Auth-Token Authorization"
+      discovery.seed_hosts: opensearch-node1,opensearch-node2
+      cluster.initial_master_nodes: opensearch-node1,opensearch-node2
+      bootstrap.memory_lock: true
+      cluster.routing.allocation.disk.threshold_enabled: false
+      cluster.routing.allocation.node_initial_primaries_recoveries: 8
+      indices.query.bool.max_clause_count: 4096
+      logger.level: WARN
+      MAX_LOCKED_MEMORY: unlimited
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
     ulimits:
       memlock:
         soft: -1
@@ -163,9 +180,13 @@ services:
   opensearch-dashboards:
     build:
       context: /dashboards
+      args:
+        OPENSEARCH_VERSION: ${OPENSEARCH_VERSION}
     container_name: opensearch-dashboards
     hostname: opensearch-dashboards.io
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     volumes:
     # modify before composing up
       - dashboards/config/opensearch_dashboards.yml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml:ro
@@ -193,6 +214,8 @@ services:
     container_name: data-prepper
     hostname: data-prepper.io
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - ./data-prepper/config/data-prepper-config.yml:/usr/share/data-prepper/config/data-prepper-config.yaml:ro
       - ./data-prepper/config/pipelines.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml:ro
@@ -216,6 +239,43 @@ services:
 #        target: /usr/share/data-prepper/config/data-prepper.p12
     healthcheck:
       test: ["CMD", "curl", "-s" ,"-XGET", "http://127.0.0.1:21890"]
+    networks:
+      - opensearch-net
+    depends_on:
+      - opensearch-node1
+
+  logstash:
+    build:
+      context: logstash/
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./logstash/config:/usr/share/logstash/config/logstash.yml:Z
+      - ./logstash/pipelines:/usr/share/logstash/pipelines:Z
+      - ./logstash/ruby:/usr/share/logstash/ruby:Z
+      - ./logstash/patterns:/usr/share/logstash/patterns:Z
+    ports:
+      #add ports here if sending logs this way from external sources
+      - "50000:50000"
+      - "5044:5044"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+#    secrets:
+#      - source: ca.crt
+#        target: /usr/share/logstash/config/ca.crt
+#      - source: logstash.cert
+#        target: /usr/share/logstash/config/logstash.crt
+#      - source: logstash.key
+#        target: /usr/share/logstash/config/logstash.key
+#      - source: logstash.pkcs8.key
+#        target: /usr/share/logstash/config/logstash.pkcs8.key
+#      - source: logstash.p12
+#        target: /usr/share/logstash/config/logstash.p12
+    healthcheck:
+      test: ["CMD", "curl", "-s" ,"-XGET", "http://127.0.0.1:9600"]
     networks:
       - opensearch-net
     depends_on:
