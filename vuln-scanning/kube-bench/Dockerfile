@@ -4,17 +4,38 @@ ARG repo="docker.io" \
     base_image="alpine:3.18" \
     image_hash="d695c3de6fcd8cfe3a6222b0358425d40adfd129a8a47c3416faff1a8aece389"
     
-FROM ${repo}/${base_image}@sha256:${image_hash} AS build-env
+FROM ${repo}/${base_image}@sha256:${image_hash} AS base
+
+RUN \
+    apk --no-cache upgrade apk-tools; \
+    apk --no-cache add \
+        procps \
+        openssl \
+        jq \
+        wget; \
+    \
+    addgroup -g 65535 kbench; \
+    adduser -h /home/kbench --shell sbin/nologin --disabled-password --uid 65535 --ingroup kbench --gecos '' kbench; \
+    sed -i -r "/^(kbench|root)/!d" /etc/group /etc/passwd; \
+    sed -i -r 's#^(.*):[^:]*$#\1:/sbin/nologin#' /etc/passwd; \
+    \
+    mkdir -p /host/cfg/; \
+    \
+    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub; \
+    apk add --no-cache gcompat
+
+FROM base AS build-env
 
 ENV GOPATH=/usr/local/bin/go \
     KBENCH_VER=0.6.19 \
     SNYK_API=
 
 RUN \
-    apk add --no-cache -t .kbench-deps ca-certificates \
-                                        go \
-                                        git \
-                                        npm; \
+    apk add --no-cache -t .kbench-deps \
+        ca-certificates \
+        go \
+        git \
+        npm; \
     mkdir -p ${GOPATH}/src/github.com/kube-bench; \
     cd ${GOPATH}/src/github.com/kube-bench; \
     git clone --depth 1 --branch v${KBENCH_VER} https://github.com/aquasecurity/kube-bench; \
@@ -28,24 +49,15 @@ RUN \
     go install; \
     rm -rf ${GOPATH}/src/github.com
 
-FROM ${base_image}
+FROM base
 
 ENV PATH=$PATH:/usr/local/mount-from-host/bin \
     RUNNING_IN_A_CONTAINER=true
     
 RUN \
-    apk add --no-cache -t .av-scan clamav freshclam wget; \
-    addgroup -g 65535 kbench; \
-    adduser -h /home/kbench --shell /bin/true --disabled-password --uid 65535 --ingroup kbench --gecos '' kbench; \
-    sed -i -r "/^(kbench|root)/!d" /etc/group /etc/passwd; \
-    sed -i -r 's#^(.*):[^:]*$#\1:/sbin/nologin#' /etc/passwd; \
-    mkdir -p /host/cfg/; \
-    apk --no-cache upgrade apk-tools; \
-    apk --no-cache add procps \
-                        openssl \
-                        jq; \
-    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub; \
-    apk add --no-cache gcompat
+    apk add --no-cache -t .av-scan \
+        clamav \
+        freshclam
     
 COPY --chmod=755 --from=build-env /usr/local/bin/go/bin/ /usr/local/bin
 #COPY --chown=kbench:kbench --from=build-env /kbench-code-review.html /home/kbench
