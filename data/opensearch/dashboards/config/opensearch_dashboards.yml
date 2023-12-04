@@ -1,26 +1,15 @@
 # OpenSearch Dashboards is served by a back end server. This setting specifies the port to use.
 server.port: 5601
-
-# Specifies the address to which the OpenSearch Dashboards server will bind. IP addresses and host names are both valid values.
-# The default is 'localhost', which usually means remote machines will not be able to connect.
-# To allow connections from remote users, set this parameter to a non-loopback address.
-server.host: "localhost"
-
-# Enables you to specify a path to mount OpenSearch Dashboards at if you are running behind a proxy.
-# Use the `server.rewriteBasePath` setting to tell OpenSearch Dashboards if it should remove the basePath
-# from requests it receives, and to prevent a deprecation warning at startup.
-# This setting cannot end in a slash.
-#server.basePath: ""
-
-# Specifies whether OpenSearch Dashboards should rewrite requests that are prefixed with
-# `server.basePath` or require that they are rewritten by your reverse proxy.
-#server.rewriteBasePath: false
-
-# The maximum payload size in bytes for incoming server requests.
-server.maxPayloadBytes: 1048576
-
-# The OpenSearch Dashboards server's name.  This is used for display purposes.
-#server.name: "your-hostname"
+server.name: "dashboards"
+server.host: "0.0.0.0"
+server.basePath: "/dashboards"
+server.rewriteBasePath: true
+server.maxPayloadBytes: 8388608
+server.cors: true
+opensearch.hosts: ["https://opensearch-node1:9200","https://opensearch-node2:9200"]
+opensearch.username: "DASHBOARDS_OPENSEARCH_USER"
+opensearch.password: "DASHBOARDS_OPENSEARCH_PASSWORD"
+data_source.enabled: false
 
 # The URLs of the OpenSearch instances to use for all your queries.
 opensearch.hosts: ["http://localhost:9200"]
@@ -273,3 +262,24 @@ vis_type_timeline.graphiteAllowedUrls: ['https://www.hostedgraphite.com/UID/ACCE
 
 # Set the value of this setting to true to enable plugin augmentation on Dashboard
 # vis_augmenter.pluginAugmentationEnabled: true
+
+map.regionmap:
+  includeOpenSearchMapsService: false
+  layers:
+     - name: "World (offline)"
+       url: "/world.geojson"
+       attribution: "https://exploratory.io/maps"
+       fields:
+          - name: "ISO_A2"
+            description: "Country Code"
+          - name: "WB_A2"
+            description: "Country Code2"
+          - name: "NAME"
+            description: "Country Name"
+
+csp.strict: false
+csp.warnLegacyBrowsers: false
+csp.rules:
+  - "script-src 'unsafe-eval' 'unsafe-inline' https://www.gstatic.com/ https://d3js.org/ https://cdn.jsdelivr.net/ https://cdnjs.cloudflare.com/ https://cdn.datatables.net/ 'self'"
+  - "worker-src blob: *"
+  - "child-src data: * blob: *"
