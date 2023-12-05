@@ -1,0 +1,86 @@
+# syntax=docker/dockerfile:1
+# gitea: Git with a cup of tea! 
+ARG repo="docker.io" \
+    base_image="alpine:3.18" \
+    image_hash="d695c3de6fcd8cfe3a6222b0358425d40adfd129a8a47c3416faff1a8aece389"
+    
+FROM ${repo}/${base_image}@sha256:${image_hash} AS base
+
+RUN apk --no-cache add \
+        bash \
+        ca-certificates \
+        curl \
+        gettext \
+        git \
+        linux-pam \
+        openssh \
+        s6 \
+        sqlite \
+        su-exec \
+        gnupg; \
+    rm -rf /var/cache/apk/*; \
+    \
+    addgroup -S -g 1000 git; \
+    adduser -S -H -D -h /data/git -s /bin/bash -u 1000 -G git git; \
+    echo "git:*" | chpasswd -e
+
+FROM base AS build-env
+
+ARG GOPROXY
+ENV GOPROXY ${GOPROXY:-direct}
+ENV GOPATH /usr/local/bin/go
+ARG GITEA_VERSION
+ARG TAGS="sqlite sqlite_unlock_notify"
+ENV TAGS "bindata timetzdata $TAGS"
+ARG CGO_EXTRA_CFLAGS
+
+RUN \
+    apk --no-cache add -t .gitea-deps \
+        build-base \
+        git \
+        go \
+        nodejs \
+        npm \
+        tzdata; \
+    rm -rf /var/cache/apk/*; \
+    mkdir -p ${GOPATH}/src/code.gitea.io
+
+WORKDIR ${GOPATH}/src/code.gitea.io
+
+# Checkout version if set
+RUN \
+    git clone https://github.com/go-gitea/gitea.git; \
+    cd gitea; \
+    if [ -n "${GITEA_VERSION}" ]; then git checkout "${GITEA_VERSION}"; fi; \
+    make clean-all build; \
+    go build contrib/environment-to-ini/environment-to-ini.go
+
+# Copy local files
+COPY docker/root /tmp/local
+
+# Set permissions
+RUN chmod 0755 \
+    /tmp/local/usr/bin/entrypoint \
+    /tmp/local/usr/local/bin/gitea \
+    /tmp/local/etc/s6/gitea/* \
+    /tmp/local/etc/s6/openssh/* \
+    /tmp/local/etc/s6/.s6-svscan/* \
+    /go/src/code.gitea.io/gitea/gitea \
+    /go/src/code.gitea.io/gitea/environment-to-ini; \
+    \
+    chmod 644 /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete
+
+FROM base
+
+ENV USER git
+ENV GITEA_CUSTOM /data/gitea
+
+COPY --from=build-env /tmp/local /
+COPY --from=build-env /usr/local/bin/go/src/code.gitea.io/gitea/gitea /app/gitea/gitea
+COPY --from=build-env /usr/local/bin/go/src/code.gitea.io/gitea/environment-to-ini /usr/local/bin/environment-to-ini
+COPY --from=build-env /usr/local/bin/go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete /etc/profile.d/gitea_bash_autocomplete.sh
+
+EXPOSE 22 3000
+VOLUME ["/data"]
+ENTRYPOINT ["/usr/bin/entrypoint"]
+CMD ["/bin/s6-svscan", "/etc/s6"]
