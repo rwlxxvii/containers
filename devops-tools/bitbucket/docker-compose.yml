@@ -14,6 +14,7 @@ networks:
         - subnet: ${BITBUCKET_SUBNET}
           gateway: ${BITBUCKET_GATEWAY}
 
+services:
   postgresql:
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres-bitbucket

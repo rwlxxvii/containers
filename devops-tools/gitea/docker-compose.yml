@@ -14,6 +14,7 @@ networks:
         - subnet: ${GITEA_SUBNET}
           gateway: ${GITEA_GATEWAY}
 
+services:
   postgresql:
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres-gitea
