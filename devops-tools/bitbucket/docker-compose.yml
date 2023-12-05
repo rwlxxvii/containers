@@ -1,0 +1,132 @@
+version: "3"
+
+volumes:
+  bitbucket-postgres:
+    driver: local
+  bitbucket-data:
+    driver: local
+
+networks:
+  bitbucket-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${BITBUCKET_SUBNET}
+          gateway: ${BITBUCKET_GATEWAY}
+
+  postgresql:
+    image: docker.io/bitnami/postgresql:latest
+    container_name: postgres-bitbucket
+    hostname: postgres-bitbucket.dev.io
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - bitbucket-postgres:/bitnami/postgresql:z
+    environment:
+      POSTGRESQL_REPLICATION_MODE: master
+      POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
+      POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
+    env_file:
+      - .env
+    ports:
+      - 5432:5432
+    networks:
+      bitbucket-net:
+        ipv4_address: ${POSTGRESQL_IPv4}
+
+  bitbucket:
+    image: docker.io/atlassian/bitbucket:8.14.2
+    container_name: bitbucket
+    hostname: ${BITBUCKET_HOSTNAME}
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - bitbucket-data:/var/atlassian/application-data/bitbucket:Z
+    environment:
+      JVM_MINIMUM_MEMORY: ${BITBUCKET_JVM_MINIMUM_MEMORY}
+      JVM_MAXIMUM_MEMORY: ${BITBUCKET_JVM_MAXIMUM_MEMORY}
+      SERVER_PROXY_NAME: ${BITBUCKET_HOSTNAME}
+      SERVER_SECURE: 'true'
+      SERVER_SCHEME: https
+      SERVER_PROXY_PORT: 443
+      SETUP_DISPLAYNAME: Bitbucket
+      SETUP_BASEURL: ${BITBUCKET_URL}
+      JDBC_DRIVER: org.postgresql.Driver
+      JDBC_USER: ${POSTGRESQL_USERNAME}
+      JDBC_PASSWORD: ${POSTGRESQL_PASSWORD}
+      JDBC_URL: jdbc:postgresql://postgres:5432/${POSTGRESQL_DATABASE}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7990/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    env_file:
+      - .env
+    ports:
+      - 443:443
+    networks:
+      bitbucket-net:
+        ipv4_address: ${BITBUCKET_IPv4}
+
+  backups:
+    image: docker.io/bitnami/postgresql:latest
+    container_name: postgres2-bitbucket
+    hostname: postgres2-bitbucket.dev.io
+    security_opt:
+      - no-new-privileges:true
+    command: 
+      - sh
+      - -c
+      - |
+        sleep 30m
+        && while true; do
+        pg_dump
+        -h postgres-bitbucket.dev.io
+        -p 5432
+        -d "${POSTGRESQL_DATABASE}"
+        -U "${POSTGRESQL_USERNAME} | gzip > /srv/bitbucket-postgres/backups/bitbucket-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
+        && find /srv/bitbucket-postgres/backups -type f -mtime +7 | xargs rm -f;
+        sleep 24h; done
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - bitbucket-postgres:/bitnami/postgresql:z
+      - bitbucket-postgres-backups:/srv/bitbucket-postgres/backups:Z
+    env_file:
+      - .env
+    environment:
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
+      POSTGRESQL_MASTER_HOST: postgres
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+    restart: unless-stopped
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      bitbucket:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    ports:
+      - 5432:5432
+    networks:
+      bitbucket-net:
+        ipv4_address: ${BACKUP_POSTGRESQL_IPv4}
