@@ -33,6 +33,7 @@ ARG GITEA_VERSION
 ARG TAGS="sqlite sqlite_unlock_notify"
 ENV TAGS "bindata timetzdata $TAGS"
 ARG CGO_EXTRA_CFLAGS
+ARG SNYK_API
 
 RUN \
     apk --no-cache add -t .gitea-deps \
@@ -47,10 +48,18 @@ RUN \
 
 WORKDIR ${GOPATH}/src/code.gitea.io
 
-# Checkout version if set
+# Clone, run snyk scan, and checkout version if set
 RUN \
     git clone https://github.com/go-gitea/gitea.git; \
+#    npm install -g snyk; \
+#    npm install -g snyk-to-html; \
+#    snyk config set api=${SNYK_API}; \
     cd gitea; \
+#    snyk code test --json | snyk-to-html -o /gitea-code-review.html; \
+#    snyk test --json | snyk-to-html -o /gitea-deps.html; \
+#    snyk monitor; \
+#    npm uninstall -g snyk; \
+#    npm uninstall -g snyk-to-html; \
     if [ -n "${GITEA_VERSION}" ]; then git checkout "${GITEA_VERSION}"; fi; \
     make clean-all build; \
     go build contrib/environment-to-ini/environment-to-ini.go
@@ -74,14 +83,43 @@ FROM base
 
 ENV USER git
 ENV GITEA_CUSTOM /data/gitea
+ENV TINI_VERSION v0.19.0
 
+#COPY --from=build-env /gitea-code-review.html /
+#COPY --from=build-env /gitea-deps.html /
 COPY --from=build-env /tmp/local /
 COPY --from=build-env /usr/local/bin/go/src/code.gitea.io/gitea/gitea /app/gitea/gitea
 COPY --from=build-env /usr/local/bin/go/src/code.gitea.io/gitea/environment-to-ini /usr/local/bin/environment-to-ini
 COPY --from=build-env /usr/local/bin/go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete /etc/profile.d/gitea_bash_autocomplete.sh
 COPY --chmod=755 entrypoint.sh /usr/bin/
 
+RUN \
+    tini_bin="" ; \
+    case "$(arch)" in \
+        aarch64) tini_bin='tini-arm64' ;; \
+        x86_64)  tini_bin='tini-amd64' ;; \
+        *) echo >&2 ; echo >&2 "Unsupported architecture $(arch)" ; echo >&2 ; exit 1 ;; \
+    esac ; \
+    curl --retry 10 -S -L -O https://github.com/krallin/tini/releases/download/${TINI_VERSION}/${tini_bin} ; \
+    curl --retry 10 -S -L -O https://github.com/krallin/tini/releases/download/${TINI_VERSION}/${tini_bin}.sha256sum ; \
+    sha256sum -c ${tini_bin}.sha256sum ; \
+    rm ${tini_bin}.sha256sum ; \
+    mv ${tini_bin} /usr/bin/tini ; \
+    chmod 0555 /usr/bin/tini; \
+    \
+    apk add --no-cache -t .av-scan \
+        clamav \
+        freshclam; \
+    \
+    DATE=$(date '+%Y-%m-%d %H:%M:%S'); \
+    freshclam; \
+    clamscan -rvi -l /clamav_scan_${DATE}.log --exclude-dir="^/sys|^/dev" /; \
+    apk del --no-network --purge .av-scan; \
+    rm -rf /var/cache/apk/*
+
 EXPOSE 22 3000
 VOLUME ["/data"]
-ENTRYPOINT ["/usr/bin/entrypoint"]
+ENTRYPOINT ["/usr/bin/tini", \
+            "--", \
+            "/usr/bin/entrypoint.sh"]
 CMD ["/bin/s6-svscan", "/etc/s6"]
