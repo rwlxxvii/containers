@@ -91,7 +91,6 @@ services:
       - |
         sleep 30m
         while true; do
-        PGPASSWORD="$$(echo $${POSTGRESQL_PASSWORD})"
         pg_dump
         -h postgres-onedev.dev.io
         -p 5432
