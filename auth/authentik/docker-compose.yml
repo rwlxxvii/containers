@@ -47,6 +47,8 @@ services:
 
   redis:
     image: docker.io/redis:alpine
+    container_name: redis-authentik
+    hostname: redis-authentik.dev.io
     command: --save 60 1 --loglevel warning
     restart: unless-stopped
     healthcheck:
@@ -68,8 +70,8 @@ services:
     restart: unless-stopped
     command: server
     environment:
-      AUTHENTIK_REDIS__HOST: redis
-      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_REDIS__HOST: redis-authentik.dev.io
+      AUTHENTIK_POSTGRESQL__HOST: postgres-authentik.dev.io
       AUTHENTIK_POSTGRESQL__USER: ${POSTGRESQL_USERNAME}
       AUTHENTIK_POSTGRESQL__NAME: ${POSTGRESQL_DATABASE}
       AUTHENTIK_POSTGRESQL__PASSWORD: ${POSTGRESQL_PASSWORD}
@@ -95,8 +97,8 @@ services:
     restart: unless-stopped
     command: worker
     environment:
-      AUTHENTIK_REDIS__HOST: redis
-      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_REDIS__HOST: redis-authentik.dev.io
+      AUTHENTIK_POSTGRESQL__HOST: postgres-authentik.dev.io
       AUTHENTIK_POSTGRESQL__USER: ${POSTGRESQL_USERNAME}
       AUTHENTIK_POSTGRESQL__NAME: ${POSTGRESQL_DATABASE}
       AUTHENTIK_POSTGRESQL__PASSWORD: ${POSTGRESQL_PASSWORD}

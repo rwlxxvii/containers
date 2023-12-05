@@ -131,7 +131,48 @@ services:
     restart: unless-stopped
     networks:
       - traefik-net
-      
+
+  authelia:
+    image: docker.io/authelia/authelia:latest
+    container_name: authelia
+    hostname: authelia-nextcloud.io
+    restart: unless-stopped
+    expose:
+      - 9091
+    volumes:
+      - ./configuration.yml:/config/configuration.yml:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+    environment:
+      TZ: "America/Chicago"
+    healthcheck:
+      test: ["CMD", "--quiet", "--no-check-certificate", "--tries=1", "--spider", "http://$(echo $AUTHELIA_IPv4):9091/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.authelia.rule=Host(`authelia-nextcloud.io`)'
+      - 'traefik.http.routers.authelia.entryPoints=https'
+      - 'traefik.http.routers.authelia.tls=true'
+      - 'traefik.http.middlewares.authelia.forwardAuth.address=http://authelia:9091/api/verify?rd=https://authelia-nextcloud.io'
+      - 'traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader=true'
+      - 'traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      traefik:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      nextcloud:
+        ipv4_address: ${AUTHELIA_IPv4}
+      traefik-net:
+
   nextcloud:
     image: docker.io/nextcloud:latest
     container_name: nextcloud
@@ -177,6 +218,8 @@ services:
       traefik:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      authelia:
         condition: service_healthy
     networks:
       nextcloud:
