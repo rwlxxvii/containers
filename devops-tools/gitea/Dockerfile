@@ -79,6 +79,7 @@ COPY --from=build-env /tmp/local /
 COPY --from=build-env /usr/local/bin/go/src/code.gitea.io/gitea/gitea /app/gitea/gitea
 COPY --from=build-env /usr/local/bin/go/src/code.gitea.io/gitea/environment-to-ini /usr/local/bin/environment-to-ini
 COPY --from=build-env /usr/local/bin/go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete /etc/profile.d/gitea_bash_autocomplete.sh
+COPY --chmod=755 entrypoint.sh /usr/bin/
 
 EXPOSE 22 3000
 VOLUME ["/data"]
