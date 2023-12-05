@@ -40,4 +40,10 @@ optional arguments:
   --load-image [LOAD_IMAGE]
                         Whether to load the image into Docker daemon after squashing
                         Default: true
+
+# save container as OCI image
+docker|podman save -o oci-<image name>.tar --format oci-archive <image name>
+
+# load to repository
+docker|podman load -q -i oci-<image name>.tar
 ```
