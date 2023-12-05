@@ -107,7 +107,7 @@ services:
       - "80:80"
       - "443:443"
     healthcheck:
-      test: ["CMD", "wget", "http://localhost:8082/ping","--spider"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/ping"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -148,7 +148,7 @@ services:
     environment:
       TZ: "America/Chicago"
     healthcheck:
-      test: ["CMD", "--quiet", "--no-check-certificate", "--tries=1", "--spider", "http://$(echo $AUTHELIA_IPv4):9091/api/health || exit 1"]
+      test: ["CMD", "wget", "--quiet", "--no-check-certificate", "--tries=1", "--spider", "http://$(echo $AUTHELIA_IPv4):9091/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
