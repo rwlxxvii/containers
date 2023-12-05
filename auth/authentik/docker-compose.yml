@@ -168,5 +168,5 @@ services:
     ports:
       - 5432:5432
     networks:
-      sonarnet:
+      authentik-net:
         ipv4_address: ${BACKUP_POSTGRESQL_IPv4}
