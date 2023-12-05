@@ -1,24 +1,24 @@
 version: "3"
 
 volumes:
-  bitbucket-postgres:
+  jira-postgres:
     driver: local
-  bitbucket-data:
+  jira-data:
     driver: local
 
 networks:
-  bitbucket-net:
+  jira-net:
     driver: bridge
     ipam:
       config:
-        - subnet: ${BITBUCKET_SUBNET}
-          gateway: ${BITBUCKET_GATEWAY}
+        - subnet: ${JIRA_SUBNET}
+          gateway: ${JIRA_GATEWAY}
 
 services:
   postgresql:
     image: docker.io/bitnami/postgresql:latest
-    container_name: postgres-bitbucket
-    hostname: postgres-bitbucket.dev.io
+    container_name: postgres-jira
+    hostname: postgres-jira.dev.io
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -30,7 +30,7 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - bitbucket-postgres:/bitnami/postgresql:z
+      - jira-postgres:/bitnami/postgresql:z
     environment:
       POSTGRESQL_REPLICATION_MODE: master
       POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
@@ -43,32 +43,29 @@ services:
     ports:
       - 5432:5432
     networks:
-      bitbucket-net:
+      jira-net:
         ipv4_address: ${POSTGRESQL_IPv4}
 
-  bitbucket:
-    image: docker.io/atlassian/bitbucket:8.14.2
-    container_name: bitbucket
-    hostname: ${BITBUCKET_HOSTNAME}
-    security_opt:
-      - no-new-privileges:true
+  jira:
+    image: docker.io/atlassian/jira-software:9.4.13
+    container_name: jira
+    hostname: ${JIRA_HOSTNAME}
     volumes:
-      - bitbucket-data:/var/atlassian/application-data/bitbucket:Z
+      - jira-data:/var/atlassian/application-data/jira:Z
     environment:
-      JVM_MINIMUM_MEMORY: ${BITBUCKET_JVM_MINIMUM_MEMORY}
-      JVM_MAXIMUM_MEMORY: ${BITBUCKET_JVM_MAXIMUM_MEMORY}
-      SERVER_PROXY_NAME: ${BITBUCKET_HOSTNAME}
-      SERVER_SECURE: 'true'
-      SERVER_SCHEME: https
-      SERVER_PROXY_PORT: 443
-      SETUP_DISPLAYNAME: Bitbucket
-      SETUP_BASEURL: ${BITBUCKET_URL}
-      JDBC_DRIVER: org.postgresql.Driver
-      JDBC_USER: ${POSTGRESQL_USERNAME}
-      JDBC_PASSWORD: ${POSTGRESQL_PASSWORD}
-      JDBC_URL: jdbc:postgresql://postgres-bitbucket.dev.io:5432/${POSTGRESQL_DATABASE}
+      JVM_MINIMUM_MEMORY: ${JIRA_JVM_MINIMUM_MEMORY}
+      JVM_MAXIMUM_MEMORY: ${JIRA_JVM_MAXIMUM_MEMORY}
+      ATL_PROXY_NAME: ${JIRA_HOSTNAME}
+      ATL_TOMCAT_SECURE: 'true'
+      ATL_TOMCAT_SCHEME: https
+      ATL_PROXY_PORT: 443
+      ATL_DB_TYPE: postgres72
+      ATL_DB_DRIVER: org.postgresql.Driver
+      ATL_JDBC_USER: ${POSTGRESQL_USERNAME}
+      ATL_JDBC_PASSWORD: ${POSTGRESQL_PASSWORD}
+      ATL_JDBC_URL: jdbc:postgresql://postgres-jira.dev.io:5432/${POSTGRESQL_DATABASE}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://$(echo $BITBUCKET_IPv4):7990/"]
+      test: ["CMD", "curl", "-f", "http://$(echo $JIRA_IPv4):8080/"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -77,10 +74,10 @@ services:
       - .env
     ports:
       - 443:443
-      - 7990:7990
+      - 8080:8080
     networks:
-      bitbucket-net:
-        ipv4_address: ${BITBUCKET_IPv4}
+      jira-net:
+        ipv4_address: ${JIRA_IPv4}
     restart: unless-stopped
     depends_on:
       postgresql:
@@ -88,8 +85,8 @@ services:
 
   backups:
     image: docker.io/bitnami/postgresql:latest
-    container_name: postgres2-bitbucket
-    hostname: postgres2-bitbucket.dev.io
+    container_name: postgres2-jira
+    hostname: postgres2-jira.dev.io
     security_opt:
       - no-new-privileges:true
     command: 
@@ -99,17 +96,17 @@ services:
         sleep 30m
         && while true; do
         pg_dump
-        -h postgres-bitbucket.dev.io
+        -h postgres-jira.dev.io
         -p 5432
         -d "${POSTGRESQL_DATABASE}"
-        -U "${POSTGRESQL_USERNAME} | gzip > /srv/bitbucket-postgres/backups/bitbucket-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
-        && find /srv/bitbucket-postgres/backups -type f -mtime +7 | xargs rm -f;
+        -U "${POSTGRESQL_USERNAME} | gzip > /srv/jira-postgres/backups/jira-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
+        && find /srv/jira-postgres/backups -type f -mtime +7 | xargs rm -f;
         sleep 24h; done
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - bitbucket-postgres:/bitnami/postgresql:z
-      - bitbucket-postgres-backups:/srv/bitbucket-postgres/backups:Z
+      - jira-postgres:/bitnami/postgresql:z
+      - jira-postgres-backups:/srv/jira-postgres/backups:Z
     env_file:
       - .env
     environment:
@@ -123,7 +120,7 @@ services:
     depends_on:
       postgresql:
         condition: service_healthy
-      bitbucket:
+      jira:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
@@ -134,5 +131,5 @@ services:
     ports:
       - 5432:5432
     networks:
-      bitbucket-net:
+      jira-net:
         ipv4_address: ${BACKUP_POSTGRESQL_IPv4}
