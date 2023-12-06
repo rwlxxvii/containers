@@ -2,7 +2,7 @@
 variable "region" {
   description = "The AWS region in which the infrastructure will be deployed"
   type        = string
-  default     = "eu-west-1"
+  default     = "us-west-1"
 }
 
 # Virtual Private Cloud Variables
