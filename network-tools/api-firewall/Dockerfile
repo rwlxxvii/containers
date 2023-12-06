@@ -3,7 +3,7 @@
 # API Firewall provides API hardening with the use of a positive security model allowing calls that match a predefined API specification for requests and responses, while rejecting everything else.
 ARG repo="docker.io" \
     base_image="alpine:3.18" \
-    image_hash="48d9183eb12a05c99bcc0bf44a003607b8e941e1d4f41f9ad12bdcc4b5672f86"
+    image_hash="d695c3de6fcd8cfe3a6222b0358425d40adfd129a8a47c3416faff1a8aece389"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS build-env
 

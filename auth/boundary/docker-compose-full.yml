@@ -1,8 +1,7 @@
 version: '3'
 
 volumes:
-  boundary_db:
-  postgresql_data:
+  boundary-postgres:
   
 networks:
   boundary:
@@ -18,14 +17,14 @@ services:
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASS}
-      - POSTGRES_DB=boundary
+      POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - boundary_db:/var/lib/postgresql:z
-      - postgresql_data:/var/lib/postgresql/data:Z
+      - boundary-postgres:/bitnami/postgresql:z
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 3

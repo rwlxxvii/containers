@@ -37,7 +37,7 @@ services:
       - onedev_db:/bitnami/postgresql:z
       - postgresql_data:/var/lib/postgresql/data:Z
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -91,7 +91,6 @@ services:
       - |
         sleep 30m
         while true; do
-        PGPASSWORD="$$(echo $${POSTGRESQL_PASSWORD})"
         pg_dump
         -h postgres-onedev.dev.io
         -p 5432
@@ -111,8 +110,7 @@ services:
       POSTGRESQL_REPLICATION_MODE: slave
       POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
-      POSTGRESQL_MASTER_HOST: postgres
-      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_MASTER_HOST: postgres-onedev.dev.io
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
     restart: unless-stopped
     depends_on:
@@ -122,5 +120,9 @@ services:
         condition: service_healthy
     networks:
       onedev:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 60s
