@@ -22,7 +22,7 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file anchore/Dockerfile --tag localbuild/anchore:latest
+      run: docker build . --file vuln-scanning/anchore/Dockerfile --tag localbuild/anchore:latest
     - name: Scan the image and upload dependency results
       uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
       with:
@@ -51,7 +51,7 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file nuclei/Dockerfile --tag localbuild/nuclei:latest
+      run: docker build . --file dast/nuclei/Dockerfile --tag localbuild/nuclei:latest
     - name: Scan the image and upload dependency results
       uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
       with:
@@ -80,7 +80,7 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file terrascan/Dockerfile --tag localbuild/terrascan:latest
+      run: docker build . --file vuln-scanning/terrascan/Dockerfile --tag localbuild/terrascan:latest
     - name: Scan the image and upload dependency results
       uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
       with:
@@ -109,7 +109,7 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file trivy/Dockerfile --tag localbuild/trivy:latest
+      run: docker build . --file vuln-scanning/trivy/Dockerfile --tag localbuild/trivy:latest
     - name: Scan the image and upload dependency results
       uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
       with:
