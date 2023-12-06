@@ -1,3 +1,45 @@
+## atmos
+
+Atmos is a workflow automation tool for DevOps that makes it more manageable to operate very large environments with DRY configuration.
+
+demo:
+
+https://www.youtube.com/watch?v=0dFEixCK0Wk&t=1415s
+
+```sh
+   │  
+   │   # Centralized stacks configuration
+   ├── stacks/
+   │   │
+   │   └── <stack_1>.yaml
+   │   └── <stack_2>.yaml
+   │   └── <stack_3>.yaml
+   │  
+   │   # Centralized components configuration. Components are broken down by tool
+   ├── components/
+   │   │
+   │   ├── terraform/   # Terraform components (Terraform root modules)
+   │   │   ├── infra/
+   │   │   ├── mixins/
+   │   │   ├── test/test-component/
+   │   │   └── top-level-component1/
+   │   │
+   │   └── helmfile/  # Helmfile components are organized by Helm chart
+   │       ├── echo-server/
+   │       └── infra/infra-server
+   │  
+   │   # Root filesystem for the Docker image (see `Dockerfile`)
+   ├── rootfs/
+   │
+   │   # Makefile for building the CLI
+   ├── Makefile
+   │   # Atmos CLI configuration
+   ├── atmos.yaml
+   │  
+   │   # Docker image for shipping the CLI and all dependencies
+   └── Dockerfile (optional)
+```
+
 ## geodisec shell
 
 Geodesic is the fastest way to get up and running with a rock solid, production grade cloud platform built entirely from Open Source technologies.
