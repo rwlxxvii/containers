@@ -9,6 +9,10 @@ ARG repo="docker.io" \
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
 RUN \
+    apk add --no-cache \
+        bash \
+        helm \
+        terraform; \
     addgroup -g 65535 atmos; \
     adduser --shell /sbin/nologin --disabled-password -h /.atmos --uid 65535 --ingroup atmos atmos; \
     mkdir -p /stacks/workflows /components/terraform /usr/local/etc/atmos /home/atmos; \
@@ -17,7 +21,7 @@ RUN \
 FROM base AS go-builder
 
 ENV GOPATH=/usr/local/bin/go \
-    VER=1.50.0
+    ATMOS_VER=1.50.0
     
 #ENV SNYK_API
 
@@ -29,10 +33,11 @@ RUN \
         make \
         npm; \
     \
-    mkdir -p ${GOPATH}/src/github.com/cloudposse; \
+    mkdir -p ${GOPATH}/src/github.com/cloudposse ${GOPATH}/src/github.com/hashicorp; \
     cd ${GOPATH}/src/github.com/cloudposse; \
-    git clone --depth 1 --branch v${VER} https://github.com/cloudposse/atmos; \
+    git clone --depth 1 --branch v${ATMOS_VER} https://github.com/cloudposse/atmos; \
     cd atmos/; \
+    mv examples /; \
 #    npm install -g snyk; \
 #    npm install -g snyk-to-html; \
 #    snyk config set api=${SNYK_API}; \
@@ -41,7 +46,7 @@ RUN \
 #    snyk monitor; \
 #    npm uninstall -g snyk; \
 #    npm uninstall -g snyk-to-html; \
-    \
+    go install golang.org/x/tools/gopls@latest; \
     go install; \
     apk del --purge .build-deps; \
     rm -rf ${GOPATH}/src/github.com
@@ -50,11 +55,12 @@ FROM base
 
 COPY --chown=atmos:atmos atmos.yml /usr/local/etc/atmos/atmos.yaml
 COPY --chown=atmos:atmos --from=go-builder /usr/local/bin/go/bin/ /usr/local/bin
+COPY --chown=atmos:atmos --from=go-builder /examples/complete /home/atmos
 #COPY --chown=atmos:atmos --from=go-builder /atmos-code-review.html /home/atmos
 #COPY --chown=atmos:atmos --from=go-builder /atmos-deps.html /home/atmos
 
 VOLUME [ "/stacks", "/components" ]
 USER atmos
 # bin check
-RUN atmos -h
+RUN atmos -h; terraform -help; helm -h
 WORKDIR /home/atmos
