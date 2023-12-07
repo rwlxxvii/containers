@@ -84,7 +84,7 @@ variable "ec2_http_endpoint" {
 variable "ec2_availability_zone" {
   description = "The AWS Availability Zone where the EC2 instance should be deployed"
   type        = string
-  default     = "eu-west-1a"
+  default     = "us-west-1a"
 }
 
 # Key Pair Variables

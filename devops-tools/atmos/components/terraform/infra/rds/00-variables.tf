@@ -82,7 +82,7 @@ variable "rds_db_instance_1_class" {
 # variable "rds_availability_zone" {
 #   description = "The AWS Availability Zone where the RDS instance should be deployed"
 #   type        = string
-#   default     = "eu-west-1a"
+#   default     = "us-west-1a"
 # }
 
 variable "rds_multi_az" {
