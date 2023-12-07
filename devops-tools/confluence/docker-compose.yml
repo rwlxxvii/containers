@@ -101,9 +101,9 @@ services:
         - "traefik.http.middlewares.compresstraefik.compress=true"
       resources:
         limits:
-          memory: 2048M
+          memory: 8192M
         reservations:
-          memory: 512M
+          memory: 4096M
 
   traefik:
     <<: *common-vars-apps
