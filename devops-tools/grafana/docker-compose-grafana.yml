@@ -9,9 +9,19 @@ networks:
   grafana:
     name: grafana
     driver: bridge
-    
+  traefik:
+    external: true
+
+x-common-vars-apps: &common-vars-apps
+  networks:
+    - grafana
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+
 services:
   postgres:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres
     hostname: postgres-grafana.io
@@ -32,11 +42,16 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
-    restart: unless-stopped
-    networks:
-      - grafana
-
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+          
   grafana:
+    <<: *common-vars-apps
     image: docker.io/bitnami/grafana:latest
     container_name: grafana
     hostname: grafana.io
@@ -74,27 +89,38 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.grafana.rule=Host(`grafana.io`)"
-      - "traefik.http.routers.grafana.service=grafana"
-      - "traefik.http.routers.grafana.entrypoints=websecure"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
-      - "traefik.http.routers.grafana.tls=true"
-      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
-      - "traefik.http.services.grafana.loadbalancer.passhostheader=true"
-      - "traefik.http.routers.grafana.middlewares=compresstraefik"
-      - "traefik.http.middlewares.compresstraefik.compress=true"
-    restart: unless-stopped
+    networks:
+      traefik:
     depends_on:
       postgres:
         condition: service_healthy
       traefik:
         condition: service_healthy
-    networks:
-      - grafana
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.grafana.rule=Host(`grafana.io`)"
+        - "traefik.http.routers.grafana.service=grafana"
+        - "traefik.http.routers.grafana.entrypoints=websecure"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+        - "traefik.http.routers.grafana.tls=true"
+        - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+        - "traefik.http.services.grafana.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.grafana.middlewares=compresstraefik"
+        - "traefik.http.middlewares.compresstraefik.compress=true"
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   traefik:
+    <<: *common-vars-apps
     image: docker.io/bitnami/traefik:latest
     container_name: traefik
     hostname: traefik.io
@@ -132,37 +158,50 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`enter.site.here`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
-      - "traefik.http.routers.dashboard.tls=true"
-      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
-      - "traefik.http.routers.dashboard.middlewares=authtraefik"
-      # Passwords must be encoded using MD5, SHA1, or BCrypt h
-      - "traefik.http.middlewares.authtraefik.basicauth.users=traefikadmin:$$enter$$pass$$here"
-      - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-    restart: unless-stopped
+    networks:
+      traefik:
+    deploy:
+      mode: global
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dashboard.rule=Host(`enter.site.here`)"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.entrypoints=websecure"
+        - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
+        - "traefik.http.routers.dashboard.tls=true"
+        - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+        - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.dashboard.middlewares=authtraefik"
+        # Passwords must be encoded using MD5, SHA1, or BCrypt h
+        - "traefik.http.middlewares.authtraefik.basicauth.users=traefikadmin:$$enter$$pass$$here"
+        - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
+        - "traefik.http.routers.http-catchall.entrypoints=web"
+        - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: psql-backup
     hostname: grafana-backup-psql.io
-    command: sh -c 'sleep 30m
-             && while true; do
-             pg_dump
-             -h postgres-grafana.io
-             -p 5432
-             -d "${POSTGRESQL_DATABASE}"
-             -U "${POSTGRESQL_USERNAME} | gzip > /srv/grafana-postgres/backups/grafana-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
-             && find /srv/grafana-postgres/backups -type f -mtime +7 | xargs rm -f;
-             sleep 24h; done'
+    command: 
+      - sh
+      - -c
+      - | 
+        sleep 30m
+        && while true; do
+        pg_dump
+        -h postgres-grafana.io
+        -p 5432
+        -d "${POSTGRESQL_DATABASE}"
+        -U "${POSTGRESQL_USERNAME} | gzip > /srv/grafana-postgres/backups/grafana-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
+        && find /srv/grafana-postgres/backups -type f -mtime +7 | xargs rm -f;
+        sleep 24h; done
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - grafana-postgres:/bitnami/postgresql:z
@@ -173,11 +212,15 @@ services:
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
       POSTGRESQL_MASTER_HOST: postgres-grafana.io
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
       grafana:
         condition: service_healthy
-    networks:
-      - grafana
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M

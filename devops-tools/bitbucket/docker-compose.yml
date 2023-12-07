@@ -5,6 +5,8 @@ volumes:
     driver: local
   bitbucket-data:
     driver: local
+  bitbucket-postgres-backups:
+    driver: local
 
 networks:
   bitbucket-net:
@@ -14,13 +16,19 @@ networks:
         - subnet: ${BITBUCKET_SUBNET}
           gateway: ${BITBUCKET_GATEWAY}
 
+x-common-vars-apps: &common-vars-apps
+  networks:
+    - bitbucket-net
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+
 services:
   postgresql:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres-bitbucket
     hostname: postgres-bitbucket.dev.io
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       start_period: 20s
@@ -45,13 +53,19 @@ services:
     networks:
       bitbucket-net:
         ipv4_address: ${POSTGRESQL_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   bitbucket:
+    <<: *common-vars-apps
     image: docker.io/atlassian/bitbucket:8.14.2
     container_name: bitbucket
     hostname: ${BITBUCKET_HOSTNAME}
-    security_opt:
-      - no-new-privileges:true
     volumes:
       - bitbucket-data:/var/atlassian/application-data/bitbucket:Z
     environment:
@@ -81,17 +95,26 @@ services:
     networks:
       bitbucket-net:
         ipv4_address: ${BITBUCKET_IPv4}
-    restart: unless-stopped
     depends_on:
       postgresql:
         condition: service_healthy
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres2-bitbucket
     hostname: postgres2-bitbucket.dev.io
-    security_opt:
-      - no-new-privileges:true
     command: 
       - sh
       - -c
@@ -118,7 +141,6 @@ services:
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
       POSTGRESQL_MASTER_HOST: postgres-bitbucket.dev.io
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
-    restart: unless-stopped
     depends_on:
       postgresql:
         condition: service_healthy
@@ -135,3 +157,10 @@ services:
     networks:
       bitbucket-net:
         ipv4_address: ${BACKUP_POSTGRESQL_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M

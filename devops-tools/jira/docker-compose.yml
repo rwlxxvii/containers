@@ -14,13 +14,17 @@ networks:
         - subnet: ${JIRA_SUBNET}
           gateway: ${JIRA_GATEWAY}
 
+x-common-vars-apps: &common-vars-apps
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+
 services:
   postgresql:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres-jira
     hostname: postgres-jira.dev.io
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       start_period: 20s
@@ -45,8 +49,16 @@ services:
     networks:
       jira-net:
         ipv4_address: ${POSTGRESQL_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   jira:
+    <<: *common-vars-apps
     image: docker.io/atlassian/jira-software:9.4.13
     container_name: jira
     hostname: ${JIRA_HOSTNAME}
@@ -78,17 +90,26 @@ services:
     networks:
       jira-net:
         ipv4_address: ${JIRA_IPv4}
-    restart: unless-stopped
     depends_on:
       postgresql:
         condition: service_healthy
-
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+          
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres2-jira
     hostname: postgres2-jira.dev.io
-    security_opt:
-      - no-new-privileges:true
     command: 
       - sh
       - -c
@@ -115,7 +136,6 @@ services:
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
       POSTGRESQL_MASTER_HOST: postgres-jira.dev.io
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
-    restart: unless-stopped
     depends_on:
       postgresql:
         condition: service_healthy
@@ -132,3 +152,10 @@ services:
     networks:
       jira-net:
         ipv4_address: ${BACKUP_POSTGRESQL_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
