@@ -5,10 +5,6 @@ volumes:
   grafana-postgres-backups:
   traefik-certificates:
 
-networks:
-  grafana:
-    name: grafana
-    driver: bridge
   traefik:
     external: true
 

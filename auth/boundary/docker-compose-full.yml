@@ -7,11 +7,10 @@ volumes:
 x-common-vars-apps: &common-vars-apps
   networks:
     boundary:
-    name: boundary
-    driver: bridge
+      driver: bridge
   security_opt:
     - no-new-privileges:true
-  restart: unless-stopped
+  restart: on-failure
   env_file:
     - .env
 

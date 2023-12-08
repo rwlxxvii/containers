@@ -12,11 +12,10 @@ networks:
 x-common-vars-apps: &common-vars-apps
   networks:
     keycloak:
-    name: keycloak
-    driver: bridge
+      driver: bridge
   security_opt:
     - no-new-privileges:true
-  restart: unless-stopped
+  restart: on-failure
   env_file:
     - .env
 

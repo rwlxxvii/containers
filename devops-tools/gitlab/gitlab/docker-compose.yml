@@ -6,12 +6,10 @@ volumes:
   gitlab-data:
   gitlab-data-backups:
   gitlab-postgres-backups:
-  
+
 networks:
   scm-dev:
-    name: scm-dev
-    driver: bridge
-
+  
 x-common-vars-apps: &common-vars-apps
   networks:
     - scm-dev

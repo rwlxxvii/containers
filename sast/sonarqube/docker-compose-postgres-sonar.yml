@@ -22,7 +22,7 @@ networks:
 x-common-vars-apps: &common-vars-apps
   security_opt:
     - no-new-privileges:true
-  restart: unless-stopped
+  restart: on-failure
   env_file:
     - .env
 

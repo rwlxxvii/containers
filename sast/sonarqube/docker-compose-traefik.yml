@@ -13,7 +13,8 @@ services:
       - no-new-privileges:true
     networks:
       sonarnet:
-       ipv4_address: ${TRAEFIK_IPv4}
+        ipv4_address: ${TRAEFIK_IPv4}
+      traefik:
     ports:
       - 80:80
       - 443:443
@@ -30,7 +31,7 @@ services:
       - ./traefik/certs/sonarqube.ca.pem:/traefik/certs/sonarqube.ca.pem:ro
       - ./traefik/certs/sonarqube.testing.io.pem:/traefik/certs/sonarqube.testing.io.pem:ro
       - ./traefik/certs/sonarqube.testing.io-key.pem:/traefik/certs/sonarqube.testing.io-key.pem:ro
-    restart: unless-stopped
+    restart: on-failure
     deploy:
       mode: replicated
       replicas: 1

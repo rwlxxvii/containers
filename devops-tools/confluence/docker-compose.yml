@@ -9,7 +9,6 @@ volumes:
 
 networks:
   confluence:
-    name: confluence
     driver: bridge
   traefik:
     external: true
