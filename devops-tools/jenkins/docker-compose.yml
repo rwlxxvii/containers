@@ -1,0 +1,26 @@
+version: '3'
+
+networks:
+  jenkins:
+  
+services:
+
+  jenkins:
+    image: jenkinsci/jenkins:lts
+    container_name: jenkins
+    hostname: jenkins.domainname.io
+    restart: unless-stopped
+    command:
+      - --httpsKeyStore=/var/jenkins_home/jenkins_keystore.jks 
+      - --httpsKeyStorePassword=${JENKINS_KEY_PASS}
+    ports:
+      - 8443:8443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./jenkins_configs:/var/jenkins_home:z
+      # keytool -genkey -keyalg RSA -alias selfsigned -keystore ./jenkins_ssl/jenkins_keystore.jks -storepass <ENTER PASS> -keysize 2048
+      - ./jenkins_ssl/jenkins_keystore.jks:/var/jenkins_home/jenkins_keystore.jks:ro
+    environment:
+      - "JENKINS_OPTS=--prefix=/jenkins"
+    networks:
+      - jenkins
