@@ -9,9 +9,17 @@ volumes:
   
 networks:
   onedev:
-  
+
+x-common-vars-apps: &common-vars-apps
+  networks:
+    - onedev
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+
 services:
   postgres:
+    <<: *common-vars-apps
     #build:
       #context: ./postgres
       #dockerfile: Dockerfile
@@ -19,9 +27,6 @@ services:
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres-onedev
     hostname: postgres-onedev.dev.io
-    security_opt:
-      - no-new-privileges:true
-    restart: unless-stopped
     ports:
       - 5432:5432
     environment:
@@ -42,21 +47,26 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
-    networks:
-      - onedev
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   onedev:
+    <<: *common-vars-apps
     build:
       context: .
       dockerfile: Dockerfile
     container_name: onedev-main
     hostname: onedev.dev.io
-    security_opt:
-      - no-new-privileges:true
     volumes:
       # run as user onedev, not as root.
       # systemctl --user enable podman.socket
-      - $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
+      #- $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
       - /home/onedev/data:/opt/onedev:z
     ports:
@@ -72,16 +82,26 @@ services:
       - hibernate_connection_url=jdbc:postgresql://postgres-onedev.dev.io:5432/"${POSTGRESQL_DATABASE}"
       - hibernate_connection_username=${POSTGRESQL_USER}
       - hibernate_connection_password=${POSTGRESQL_PASSWORD}
-    networks:
-      - onedev
     depends_on:
       postgres:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "wget", "-O-", "https://onedev.dev.io:6610"]
       interval: 3s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: onedev-psql-backup
     hostname: onedev-psql-backup.dev.io
@@ -112,17 +132,21 @@ services:
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
       POSTGRESQL_MASTER_HOST: postgres-onedev.dev.io
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
       onedev:
         condition: service_healthy
-    networks:
-      onedev:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 60s
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M

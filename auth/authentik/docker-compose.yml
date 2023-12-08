@@ -14,13 +14,19 @@ networks:
         - subnet: ${AUTHENTIK_SUBNET}
           gateway: ${AUTHENTIK_GATEWAY}
 
+x-common-vars-apps: &common-vars-apps
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+  env_file:
+    - .env
+
 services:
   postgresql:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres-authentik
     hostname: postgres-authentik.dev.io
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       start_period: 20s
@@ -37,20 +43,25 @@ services:
       POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
       POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
-    env_file:
-      - .env
     ports:
       - 5432:5432
     networks:
       authentik-net:
         ipv4_address: ${POSTGRESQL_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   redis:
+    <<: *common-vars-apps
     image: docker.io/redis:alpine
     container_name: redis-authentik
     hostname: redis-authentik.dev.io
     command: --save 60 1 --loglevel warning
-    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 20s
@@ -64,10 +75,19 @@ services:
     networks:
       authentik-net:
         ipv4_address: ${REDIS_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   server:
+    <<: *common-vars-apps
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.4}
-    restart: unless-stopped
+    container_name: authentik-server
+    hostname: authentik-server.dev.io
     command: server
     environment:
       AUTHENTIK_REDIS__HOST: redis-authentik.dev.io
@@ -78,8 +98,6 @@ services:
     volumes:
       - ./media:/media
       - ./custom-templates:/templates
-    env_file:
-      - .env
     ports:
       - "${COMPOSE_PORT_HTTP:-9000}:9000"
       - "${COMPOSE_PORT_HTTPS:-9443}:9443"
@@ -91,10 +109,23 @@ services:
     networks:
       authentik-net:
         ipv4_address: ${SERVER_IPv4}
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   worker:
+    <<: *common-vars-apps
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.4}
-    restart: unless-stopped
+    container_name: authentik-worker
+    hostname: authentik-worker.dev.io
     command: worker
     environment:
       AUTHENTIK_REDIS__HOST: redis-authentik.dev.io
@@ -117,8 +148,6 @@ services:
       - ./media:/media
       - ./certs:/certs
       - ./custom-templates:/templates
-    env_file:
-      - .env
     depends_on:
       postgresql:
         condition: service_healthy
@@ -127,13 +156,19 @@ services:
     networks:
       authentik-net:
         ipv4_address: ${WORKER_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres2-authentik
     hostname: postgres2-authentik.dev.io
-    security_opt:
-      - no-new-privileges:true
     command: 
       - sh
       - -c
@@ -157,7 +192,6 @@ services:
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
       POSTGRESQL_MASTER_HOST: postgres-authentik.dev.io
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
-    restart: unless-stopped
     depends_on:
       postgresql:
         condition: service_healthy
@@ -174,3 +208,10 @@ services:
     networks:
       authentik-net:
         ipv4_address: ${BACKUP_POSTGRESQL_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M

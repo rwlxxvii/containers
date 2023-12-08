@@ -14,13 +14,19 @@ networks:
         - subnet: ${GITEA_SUBNET}
           gateway: ${GITEA_GATEWAY}
 
+x-common-vars-apps: &common-vars-apps
+  networks:
+    - gitea-net
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+
 services:
   postgresql:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres-gitea
     hostname: postgres-gitea.dev.io
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       start_period: 20s
@@ -45,13 +51,20 @@ services:
     networks:
       gitea-net:
         ipv4_address: ${POSTGRESQL_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   gitea:
     build:
       context: ./
+    <<: *common-vars-apps
     container_name: gitea
     hostname: gitea.dev.io
-    restart: unless-stopped
     volumes:
       - gitea-data:/data:Z
       - /etc/timezone:/etc/timezone:ro
@@ -88,13 +101,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+          
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres2-gitea
     hostname: postgres2-gitea.dev.io
-    security_opt:
-      - no-new-privileges:true
     command: 
       - sh
       - -c
@@ -121,7 +144,6 @@ services:
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
       POSTGRESQL_MASTER_HOST: postgres-gitea.dev.io
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
-    restart: unless-stopped
     depends_on:
       postgresql:
         condition: service_healthy
@@ -138,3 +160,10 @@ services:
     networks:
       gitea-net:
         ipv4_address: ${BACKUP_POSTGRESQL_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
