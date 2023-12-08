@@ -6,12 +6,23 @@ volumes:
   traefik-certificates:
 
 networks:
-  keycloak:
+  traefik:
+    external: true
+
+x-common-vars-apps: &common-vars-apps
+  networks:
+    keycloak:
     name: keycloak
     driver: bridge
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+  env_file:
+    - .env
 
 services:
   postgres:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres
     hostname: postgres-keycloak.io
@@ -28,16 +39,21 @@ services:
       POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 60s
-    restart: unless-stopped
-    networks:
-      - keycloak
-      
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+
   keycloak:
+    <<: *common-vars-apps
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
     hostname: keycloak.io
@@ -67,27 +83,38 @@ services:
       timeout: 5s
       retries: 3
       start_period: 120s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`keycloak.io`)"
-      - "traefik.http.routers.keycloak.service=keycloak"
-      - "traefik.http.routers.keycloak.entrypoints=websecure"
-      - "traefik.http.services.keycloak.loadbalancer.server.port=8077"
-      - "traefik.http.routers.keycloak.tls=true"
-      - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
-      - "traefik.http.services.keycloak.loadbalancer.passhostheader=true"
-      - "traefik.http.routers.keycloak.middlewares=compresstraefik"
-      - "traefik.http.middlewares.compresstraefik.compress=true"
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
       traefik:
         condition: service_healthy
     networks:
-      - keycloak
+      - traefik
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.keycloak.rule=Host(`keycloak.io`)"
+        - "traefik.http.routers.keycloak.service=keycloak"
+        - "traefik.http.routers.keycloak.entrypoints=websecure"
+        - "traefik.http.services.keycloak.loadbalancer.server.port=8077"
+        - "traefik.http.routers.keycloak.tls=true"
+        - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
+        - "traefik.http.services.keycloak.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.keycloak.middlewares=compresstraefik"
+        - "traefik.http.middlewares.compresstraefik.compress=true"
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   traefik:
+    <<: *common-vars-apps
     image: docker.io/traefik:latest
     container_name: traefik
     hostname: traefik.io
@@ -125,27 +152,34 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.io`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
-      - "traefik.http.routers.dashboard.tls=true"
-      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
-      - "traefik.http.routers.dashboard.middlewares=authtraefik"
-      # Passwords must be encoded using MD5, SHA1, or BCrypt
-      - "traefik.http.middlewares.authtraefik.basicauth.users=traefikadmin:$$enter$$hashed$$passhere"
-      - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-    restart: unless-stopped
     networks:
-      - keycloak
+      - traefik
+    deploy:
+      mode: global
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dashboard.rule=Host(`traefik.io`)"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.entrypoints=websecure"
+        - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
+        - "traefik.http.routers.dashboard.tls=true"
+        - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+        - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.dashboard.middlewares=authtraefik"
+        # Passwords must be encoded using MD5, SHA1, or BCrypt
+        - "traefik.http.middlewares.authtraefik.basicauth.users=traefikadmin:$$enter$$hashed$$passhere"
+        - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
+        - "traefik.http.routers.http-catchall.entrypoints=web"
+        - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: psql-backup
     hostname: keycloak-backup-psql.io
@@ -170,11 +204,15 @@ services:
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
     ports:
       - ${DB_PORT}:${DB_PORT}
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
       keycloak:
         condition: service_healthy
-    networks:
-      - keycloak
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
