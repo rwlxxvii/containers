@@ -65,7 +65,8 @@ services:
     volumes:
       # run as user onedev, not as root.
       # systemctl --user enable podman.socket
-      - $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
+      #- $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
       - /home/onedev/data:/opt/onedev:z
     ports:
