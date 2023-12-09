@@ -143,8 +143,8 @@ services:
     volumes:
       # run as user authentik
       # systemctl --user enable podman.socket
-      - $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
-      #- /var/run/docker.sock:/var/run/docker.sock
+      #- $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./media:/media
       - ./certs:/certs
       - ./custom-templates:/templates

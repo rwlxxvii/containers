@@ -71,7 +71,6 @@ services:
       - zoo1
       - kafka1
 
-  
   kafka-rest-proxy:
     <<: *common-vars-apps
     image: confluentinc/cp-kafka-rest:7.3.5-1-ubi8
@@ -90,7 +89,6 @@ services:
       - kafka1
       - kafka-schema-registry
 
-  
   kafka-connect:
     <<: *common-vars-apps
     image: confluentinc/cp-kafka-connect:7.3.5-1-ubi8
@@ -134,7 +132,6 @@ services:
         confluent-hub install --no-prompt confluentinc/kafka-connect-syslog:latest
         /etc/confluent/docker/run
 
-  
   ksqldb-server:
     <<: *common-vars-apps
     image: confluentinc/cp-ksqldb-server:7.3.5-1-ubi8
