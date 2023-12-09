@@ -6,6 +6,10 @@ volumes:
   apm-server:
   fleet-server:
 
+networks:
+  elk:
+    driver: bridge
+
 x-common-vars-apps: &common-vars-apps
   networks:
     - elk
@@ -16,11 +20,12 @@ x-common-vars-apps: &common-vars-apps
     - .env
 
 services:
-  # no logstash in this setup, using elastic agent's instead.
   setup:
     <<: *common-vars-apps
     build:
       context: setup/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
     init: true
     volumes:
       - ./setup/entrypoint.sh:/entrypoint.sh:ro,Z
@@ -42,6 +47,8 @@ services:
     <<: *common-vars-apps
     build:
       context: elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
       - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - elasticsearch:/usr/share/elasticsearch/data:Z
@@ -57,6 +64,8 @@ services:
     <<: *common-vars-apps
     build:
       context: kibana/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
       - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     ports:
@@ -128,7 +137,7 @@ services:
   fleet-server:
     <<: *common-vars-apps
     build:
-      context: extensions/fleet/
+      context: fleet/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     hostname: fleet-server
@@ -156,7 +165,7 @@ services:
   apm-server:
     <<: *common-vars-apps
     build:
-      context: extensions/fleet/
+      context: fleet/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     hostname: apm-server
