@@ -16,14 +16,20 @@ networks:
           gateway: ${NEXTCLOUD_GATEWAY}
   traefik-net:
     external: true
-    
+
+x-common-vars-apps: &common-vars-apps
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+  env_file:
+    - .env
+
 services:
   postgresql:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres-nextcloud
     hostname: postgres-nextcloud.dev.io
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       start_period: 20s
@@ -41,8 +47,6 @@ services:
       POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
       POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
-    env_file:
-      - .env
     ports:
       - 5432:5432
     networks:
@@ -50,9 +54,9 @@ services:
         ipv4_address: ${POSTGRESQL_IPv4}
 
   redis:
+    <<: *common-vars-apps
     image: docker.io/redis:alpine
     command: --save 60 1 --loglevel warning
-    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       start_period: 20s
@@ -63,8 +67,6 @@ services:
       - redis:/data:z
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-    env_file:
-      - .env
     ports:
       - 6379:6379
     networks:
@@ -72,6 +74,7 @@ services:
         ipv4_address: ${REDIS_IPv4}
 
   traefik:
+    <<: *common-vars-apps
     image: docker.io/traefik:latest
     container_name: traefik
     hostname: traefik-nextcloud.io
@@ -101,8 +104,6 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - traefik-certificates:/etc/traefik/acme:Z
-    env_file:
-      - .env
     ports:
       - "80:80"
       - "443:443"
@@ -128,23 +129,22 @@ services:
       - "traefik.http.routers.http-catchall.entrypoints=web"
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-    restart: unless-stopped
     networks:
-      - traefik-net
+      nextcloud:
+        ipv4_address: ${TRAEFIK_IPv4}
+      traefik-net:
 
   authelia:
+    <<: *common-vars-apps
     image: docker.io/authelia/authelia:latest
     container_name: authelia
     hostname: authelia-nextcloud.io
-    restart: unless-stopped
     expose:
       - 9091
     volumes:
       - ./configuration.yml:/config/configuration.yml:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-    env_file:
-      - .env
     environment:
       TZ: "America/Chicago"
     healthcheck:
@@ -174,6 +174,7 @@ services:
       traefik-net:
 
   nextcloud:
+    <<: *common-vars-apps
     image: docker.io/nextcloud:latest
     container_name: nextcloud
     hostname: nextcloud.io
@@ -181,8 +182,6 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - nextcloud-data:/var/www/html:Z
-    env_file:
-      - .env
     ports:
       - "8900:80"
     environment:
@@ -211,7 +210,6 @@ services:
       - "traefik.http.services.nextcloud.loadbalancer.passhostheader=true"
       - "traefik.http.routers.nextcloud.middlewares=compresstraefik"
       - "traefik.http.middlewares.compresstraefik.compress=true"
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -227,11 +225,10 @@ services:
       traefik-net:
 
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres2-nextcloud
     hostname: postgres2-nextcloud.dev.io
-    security_opt:
-      - no-new-privileges:true
     command: 
       - sh
       - -c
@@ -250,15 +247,12 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - nextcloud-postgres:/bitnami/postgresql:z
       - nextcloud-postgres-backups:/srv/nextcloud-postgres/backups:Z
-    env_file:
-      - .env
     environment:
       POSTGRESQL_REPLICATION_MODE: slave
       POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
       POSTGRESQL_MASTER_HOST: postgres-nextcloud.dev.io
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
-    restart: unless-stopped
     depends_on:
       postgresql:
         condition: service_healthy

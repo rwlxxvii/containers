@@ -1,9 +1,22 @@
 version: '3.8'
 
-services:  
-  
+volumes:
+  pg_data: {}
+  conduktor_data: {}
+
+x-common-vars-apps: &common-vars-apps
+  networks:
+    - kafka
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+  env_file:
+    - .env
+
+services:
   postgresql:
-    image: docker.io/bitnami/postgresql:latest
+    <<: *common-vars-apps
+    image: docker.io/postgres:latest
     hostname: postgresql
     volumes:
       - pg_data:/var/lib/postgresql/data
@@ -14,6 +27,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
 
   conduktor-platform:
+    <<: *common-vars-apps
     image: conduktor/conduktor-platform:latest
     ports:
       - "8080:8080"
@@ -31,7 +45,3 @@ services:
       CDK_CLUSTERS_0_SCHEMAREGISTRY_URL: "http://kafka-schema-registry:8081"
       CDK_CLUSTERS_0_KAFKACONNECTS_0_URL: "http://kafka-connect:8083"
       CDK_CLUSTERS_0_KAFKACONNECTS_0_NAME: "full stack kafka connect"
-
-volumes:
-  pg_data: {}
-  conduktor_data: {}

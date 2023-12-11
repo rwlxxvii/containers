@@ -143,8 +143,8 @@ services:
     volumes:
       # run as user authentik
       # systemctl --user enable podman.socket
-      - $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
-      #- /var/run/docker.sock:/var/run/docker.sock
+      #- $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./media:/media
       - ./certs:/certs
       - ./custom-templates:/templates
@@ -156,6 +156,48 @@ services:
     networks:
       authentik-net:
         ipv4_address: ${WORKER_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+
+  docker-socket-proxy:
+    image: docker.io/tecnativa/docker-socket-proxy
+    container_name: docker-socket-proxy 
+    hostname: docker-socket-proxy
+    privileged: true
+    environment:
+      - SERVICES=1
+      - TASKS=1
+      - NETWORKS=1
+      - NODES=1
+      - BUILD=1
+      - IMAGES=1
+      - GRPC=1
+      - CONTAINERS=1
+      - PLUGINS=1
+      - SYSTEM=1
+      - VOLUMES=1
+      - INFO=1
+      - DISTRIBUTION=1
+      - POST=1
+      - AUTH=1
+      - SECRETS=1
+      - SWARM=1
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      #- $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # modify config to your environment
+      #- ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    env_file:
+      - .env
+    networks:
+      authentik-net:
+        ipv4_address: ${SOCKETPROXY_IPv4}
     deploy:
       mode: global
       resources:

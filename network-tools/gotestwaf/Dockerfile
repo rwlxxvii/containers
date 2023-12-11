@@ -1,8 +1,8 @@
 # gotestwaf: GoTestWAF is a tool for API and OWASP attack simulation that supports a wide range of API protocols including REST, GraphQL, gRPC, WebSockets, SOAP, XMLRPC, and others.
 # It was designed to evaluate web application security solutions, such as API security proxies, Web Application Firewalls, IPS, API gateways, and others.
 ARG repo="docker.io" \
-    base_image="alpine:3.18" \
-    image_hash="d695c3de6fcd8cfe3a6222b0358425d40adfd129a8a47c3416faff1a8aece389"
+    base_image="alpine:3.19" \
+    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS build-env
 
