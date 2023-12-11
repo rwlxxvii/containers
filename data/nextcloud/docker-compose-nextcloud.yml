@@ -142,7 +142,8 @@ services:
     expose:
       - 9091
     volumes:
-      - ./configuration.yml:/config/configuration.yml:ro
+      #- ./configuration.yml:/config/configuration.yml:ro
+      - ./authelia:/config:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
