@@ -2,7 +2,9 @@
 
 https://virustotal.github.io/yara/
 
-[![Docker Repository on Quay](https://quay.io/repository/rootshifty/yara/status "Docker Repository on Quay")](https://quay.io/repository/rootshifty/yara)
+csv export:
+
+https://github.com/Neo23x0/yarAnalyzer
 
 ```sh
 podman build -t yara .
