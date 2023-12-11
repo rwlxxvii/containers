@@ -15,8 +15,7 @@ RUN \
     apk add --no-cache \
         aws-cli \
         bash \
-        helm \
-        terraform; \
+        helm; \
     apk add --no-cache kubectl --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community; \
     addgroup -g 65535 atmos; \
     adduser --shell /sbin/nologin --disabled-password -h /.atmos --uid 65535 --ingroup atmos atmos; \
@@ -68,5 +67,5 @@ COPY --chown=atmos:atmos --from=go-builder /examples/complete /home/atmos
 VOLUME [ "/stacks", "/components" ]
 USER atmos
 # bin check
-RUN atmos -h; terraform -help; helm -h
+RUN atmos -h
 WORKDIR /home/atmos
