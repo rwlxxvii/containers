@@ -1,4 +1,4 @@
-FROM docker.io/alpine:3.18
+FROM docker.io/alpine:3.19
 
 # url with main/master branch of code to scan
 ARG URL

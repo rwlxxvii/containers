@@ -1,4 +1,9 @@
-FROM docker.io/alpine:edge
+# syntax=docker/dockerfile:1
+ARG repo="docker.io" \
+    base_image="alpine:3.19" \
+    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
+    
+FROM ${repo}/${base_image}@sha256:${image_hash}
 
 LABEL org.opencontainers.image.name='Yara' \
     org.opencontainers.image.description='The pattern matching swiss knife for malware researchers.' \
@@ -6,7 +11,7 @@ LABEL org.opencontainers.image.name='Yara' \
     org.opencontainers.image.url='https://virustotal.github.io/yara/' \
     org.opencontainers.image.licenses='BSD 3-Clause "New" or "Revised" License' \
     org.opencontainers.image.vendor='VirusTotal' \
-    org.opencontainers.image.schema-version='4.2.3' \
+    org.opencontainers.image.schema-version='4.3.2' \
     MAINTAINER="@rw"
 
 # https://snyk.io/login?cta=sign-up&loc=nav&page=support_docs_page
