@@ -191,6 +191,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
       #- $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # modify config to your environment
+      #- ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     env_file:
       - .env
     networks:
