@@ -8,7 +8,7 @@ import traceback
 import codecs
 import re
 
-YARA_RULE_DIRECTORIES = [r'./']
+YARA_RULE_DIRECTORIES = [r'./rules']
 FILENAME_IOC_DIRECTORY = r'../iocs'
 
 

@@ -30,10 +30,15 @@ RUN \
         jansson \
         bison \
         su-exec \
-        clamav \
-        freshclam; \
+        python3 \
+        py3-pip; \
 	\
     apk add --no-cache -t .yara-deps \
+        gcc \
+        g++ \
+        musl-dev \
+        linux-headers \
+        python3-dev \
         openssl-dev \
         jansson-dev \
         build-base \
@@ -45,10 +50,10 @@ RUN \
         libtool \
         flex \
         git; \
-    cd /tmp/; \
+    cd /tmp; \
     git clone --recursive --branch v${VER} https://github.com/VirusTotal/yara.git; \
-    cd /tmp/yara; \
-#run SCA scan
+    cd yara; \
+#    \
 #    npm install -g snyk; \
 #    npm install -g snyk-to-html; \
 #    snyk config set api=${SNYK_API}; \
@@ -57,33 +62,38 @@ RUN \
 #    snyk monitor; \
 #    npm uninstall -g snyk; \
 #    npm uninstall -g snyk-to-html; \
+    \
     ./bootstrap.sh; \
     sync; \
-    ./configure --with-crypto \
+    ./configure \
+    --with-crypto \
+    --disable-shared \
     --enable-magic \
     --enable-cuckoo \
     --enable-dotnet; \
     make; \
     make install; \
+    \
+    git clone --recursive https://github.com/VirusTotal/yara-python; \
+    cd yara-python; \
+    python3 setup.py build --dynamic-linking; \
+    python3 setup.py install; \
+    \
     mkdir /rules; \
     rm -rf /tmp/*; \
+    cd /; \
     apk del --purge .yara-deps; \
+    \
     addgroup -g 65535 yara; \
     adduser --disabled-password \
     -h /home/yara --uid 65535 --ingroup yara yara
 
 COPY --chown=yara:yara /rules /rules
 COPY --chown=yara:yara include_rules.yar /rules
+COPY --chown=yara:yara /iocs /iocs
 
-RUN set -x; \
-    	\
-    freshclam; \
-    clamscan -r -v -i -l /home/yara/last_scan.log --exclude-dir="^/sys" /; \
-    chown anchore:anchore /home/yara/last_scan.log; \
-    grep -Hrn FOUND /home/yara/last_scan.log; \
-    apk del clamav freshclam; \
-    rm -rf /var/cache/apk/*
-    
+WORKDIR /rules
+#RUN python3 build-rules.py
 VOLUME /malware
 VOLUME /rules
 WORKDIR /malware
