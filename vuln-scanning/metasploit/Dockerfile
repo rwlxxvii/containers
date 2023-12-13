@@ -1,4 +1,4 @@
-FROM docker.io/debian:trixie
+FROM docker.io/ubuntu:jammy
 
 LABEL \
     org.opencontainers.image.name='Metasploit Framework' \
@@ -12,29 +12,36 @@ ENV DEBIAN_FRONTEND noninteractive \
     LANG=en_US.UTF-8
 
 RUN \
+	set -e; \
 	apt-get upgrade -yq; \
+	apt-get update -yq; \
 	apt-get install -y \
+		bash \
+		ca-certificates \
 		curl \
 		gnupg \
 		apt-transport-https \
+		software-properties-common \
 		wget; \
-	declare repo_version=$(if command -v lsb_release &> /dev/null; then lsb_release -r -s; else grep -oP '(?<=^VERSION_ID=).+' /etc/os-release | tr -d '"'; fi); \
-	wget https://packages.microsoft.com/config/ubuntu/$repo_version/packages-microsoft-prod.deb -O packages-microsoft-prod.deb; \
+	\
+	curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall; \
+	chmod +x msfinstall; \
+	./msfinstall; \
+	mv /etc/apt/trusted.gpg /etc/apt/trusted.gpg.d/; \
+	\
+	wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb; \
 	dpkg -i packages-microsoft-prod.deb; \
 	rm packages-microsoft-prod.deb; \
-	curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - ; \
-	echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-stretch-prod stretch main" > /etc/apt/sources.list.d/powershell.list; \
+	\
 	apt-get update -yq; \
 	apt-get install -y \
 		build-essential \
 		libffi-dev \
 		libgit2-dev \
-		metasploit-framework \
 		python3 \
 		python3-pip \
-		bash \
 		tmux \
-		go \
+		golang \
 		git \
 		openssl \
 		hydra \
@@ -53,9 +60,7 @@ RUN \
 COPY . /
 
 # tooling install, uncomment to elect which to install
-RUN \
-	cp tmux.conf /root/.tmux.conf; \
-	python3 -m pip --no-cache-dir install -r ./requirements.txt; \
+#RUN \
 	#mkdir -p /root/tooling; cd /root/tooling; \
 	# mosquito - Automating reconnaissance and brute force attacks.
 	#git clone https://github.com/r00t-3xp10it/resource_files.git; \
@@ -94,12 +99,11 @@ RUN \
 	#As a workaround while I work to get around this, please disable Real-time Protection in Defender before compiling DefenderCheck."; \
 	#find ./ -name "*.sh" -exec chmod +x {} \; ; \
 	#rm -f *.zip; \
-	mv ../*.py .; mv ../torctl.sh .
 
-EXPOSE 4444
-EXPOSE 80
-EXPOSE 8080
-EXPOSE 443
-EXPOSE 445
-EXPOSE 8081
+RUN \
+	cp tmux.conf /root/.tmux.conf; \
+	chmod 0755 /init.sh; \
+	python3 -m pip --no-cache-dir install -r ./requirements.txt
+
+WORKDIR /opt
 ENTRYPOINT ["/init.sh"]
