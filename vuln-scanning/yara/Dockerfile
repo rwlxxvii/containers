@@ -28,6 +28,7 @@ RUN \
         openssl \
         file \
         jansson \
+        libmagic \
         bison \
         su-exec \
         python3 \
@@ -67,7 +68,6 @@ RUN \
     sync; \
     ./configure \
     --with-crypto \
-    --disable-shared \
     --enable-magic \
     --enable-cuckoo \
     --enable-dotnet; \
