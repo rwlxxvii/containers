@@ -49,11 +49,11 @@ COPY --from=builder rudder-server/build/wait-for-go/wait-for-go .
 COPY --from=builder rudder-server/build/regulation-worker .
 COPY --from=builder rudder-server/devtool .
 COPY --from=builder rudder-server/rudder-cli /usr/bin/rudder-cli
-COPY --from=builder rudder-server/build/entrypoint.sh .
+COPY --from=builder rudder-server/build/docker-entrypoint.sh .
 COPY --from=builder rudder-server/build/wait-for .
 COPY --from=builder rudder-server/scripts/generate-event /scripts/generate-event
 COPY --from=builder rudder-server/scripts/batch.json /scripts/batch.json
 
 EXPOSE 8080/tcp
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["/rudder-server"]
