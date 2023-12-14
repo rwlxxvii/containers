@@ -3,10 +3,10 @@ ARG repo="docker.io" \
     base_image="alpine:3.19" \
     image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
 
-# build node from source 
+# build node from source
 FROM ${repo}/${base_image}@sha256:${image_hash} AS node-base
 
-ENV NODE_VERSION 21.4.0
+ENV NODE_VERSION 20.10.0
 
 RUN \
     addgroup -g 1000 node; \
@@ -26,6 +26,7 @@ RUN \
         *) ;; \
       esac; \
   if [ -n "${CHECKSUM}" ]; then \
+    set -x; \
     curl -fsSLO --compressed "https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz"; \
     echo "$CHECKSUM  node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz" | sha256sum -c - ; \
       tar -xJf "node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz" -C /usr/local --strip-components=1 --no-same-owner; \
@@ -66,7 +67,7 @@ RUN \
     gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc; \
     gpgconf --kill all; \
     rm -rf "$GNUPGHOME"; \
-    grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c -; \
+    grep " node-v$NODE_VERSION.tar.xz\$" SHASUMS256.txt | sha256sum -c - ; \
     tar -xf "node-v$NODE_VERSION.tar.xz"; \
     cd "node-v$NODE_VERSION"; \
     ./configure; \
@@ -113,97 +114,36 @@ RUN apk add --no-cache --virtual .build-deps-yarn \
   # smoke test
   yarn --version
 
-COPY node-docker-entrypoint.sh /usr/local/bin/
-ENTRYPOINT ["node-docker-entrypoint.sh"]
+#COPY node-docker-entrypoint.sh /usr/local/bin/
+#ENTRYPOINT ["node-docker-entrypoint.sh"]
 
-CMD [ "node" ]
+#CMD [ "node" ]
 
-# base image from node build
-FROM node-base AS base
-
-ENV HUSKY 0
+FROM node-base AS build
 
 RUN \
-    apk update; apk upgrade; \
+    apk update; \
     apk add --no-cache \
-        tini \
-        make \
-        g++ \
         git \
-        python3; \
-    mkdir -p /home/node/app/node_modules; \
-    chown -R node:node /home/node/app
+        libc6-compat; \
+    npm install -g npm@10.2.5; \
+    npm install turbo --global; \
+    mkdir -p /src; cd /src; \
+    git clone https://github.com/teamhanko/hanko/
 
-FROM base AS development
-
-ENV HUSKY 0
-
-ARG version
-ARG GIT_COMMIT_SHA
-ENV transformer_build_version=$version
-ENV git_commit_sha=$GIT_COMMIT_SHA
-
-# Create app directory, clone source files
-WORKDIR /home/node/app
-RUN \
-    chown -R node:node /home/node/app; \
-    git clone https://github.com/rudderlabs/rudder-transformer.git; \
-    cp rudder-transformer/package*.json ./; \
-    cp scripts/skipPrepareScript.js ./scripts/skipPrepareScript.js; \
-    chown -R node:node /home/node/app
-
-USER node
+WORKDIR /app
+ENV PATH=/app/node_modules/.bin:$PATH
 
 RUN \
-    npm ci --no-audit --cache .npm; \
-    npm run build:ci -- --sourceMap false; \
-    npm run copy; \
-    npm run setup:swagger
+    cp -R /src/hanko/frontend/* .; \
+    npm install -g microbundle; \
+    npm ci --silent; \
+    npx update-browserslist-db@latest; \
+    npm run build:elements
 
-ENTRYPOINT ["/sbin/tini", "--"]
-
-HEALTHCHECK --interval=1s --timeout=30s --retries=30 \
-    CMD wget --no-verbose --tries=5 --spider http://localhost:9090/health || exit 1
-
-CMD [ "npm", "start" ]
-
-EXPOSE 9090/tcp
-
-FROM base AS prodDepsBuilder
-
-WORKDIR /home/node/app
-USER node
-COPY --chown=node:node --from=development /home/node/app/package*.json ./
-COPY --chown=node:node --from=development /home/node/app/scripts/skipPrepareScript.js ./scripts/skipPrepareScript.js
-
-ENV SKIP_PREPARE_SCRIPT='true'
-
-RUN npm ci --omit=dev --no-audit --cache .npm
-RUN npm run clean:node
-
-# final image
-FROM base as production
-
-ENV HUSKY 0
-
-ARG version
-ARG GIT_COMMIT_SHA
-ENV transformer_build_version=$version
-ENV git_commit_sha=$GIT_COMMIT_SHA
-
-WORKDIR /home/node/app
-
-USER node
-
-COPY --chown=node:node --from=prodDepsBuilder /home/node/app/package.json ./
-COPY --chown=node:node --from=prodDepsBuilder /home/node/app/node_modules ./node_modules
-COPY --chown=node:node --from=development /home/node/app/dist/ ./dist
-
-ENTRYPOINT ["/sbin/tini", "--"]
-
-HEALTHCHECK --interval=1s --timeout=30s --retries=30 \
-CMD wget --no-verbose --tries=5 --spider http://localhost:9090/health || exit 1
-
-CMD [ "npm", "start" ]
-
-EXPOSE 9090/tcp
+FROM docker.io/nginx:stable-alpine
+COPY --from=build /app/elements/dist/elements.js /usr/share/nginx/html
+COPY --from=build /app/frontend-sdk/dist/sdk.* /usr/share/nginx/html
+COPY --from=build /app/elements/nginx/default.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
