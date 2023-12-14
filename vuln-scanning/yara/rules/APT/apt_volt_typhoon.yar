@@ -1,5 +1,10 @@
 rule ShellJSP {
 
+    meta:
+
+        author = "Joint Cybersecurity Advisory"
+        info = "People's Republic of China State-Sponsored Cyber Actor Living off the Land to Evade Detection"
+
     strings:
 
         $s1 = "decrypt(fpath)"
@@ -17,6 +22,11 @@ rule ShellJSP {
 
 rule EncryptJSP {
 
+    meta:
+
+        author = "Joint Cybersecurity Advisory"
+        info = "People's Republic of China State-Sponsored Cyber Actor Living off the Land to Evade Detection"
+        
     strings:
         $s1 = "AEScrypt"
         $s2 = "AES/CBC/PKCS5Padding"
