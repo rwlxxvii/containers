@@ -43,11 +43,11 @@ providers:
 #        entryPoint: web
 #      tlsChallenge: {}
 log:
-  filePath: "/var/log/traefik/sonar/traefik.log"
+  filePath: "/var/log/traefik/traefik.log"
   format: json
   level: INFO
 accessLog:
-  filePath: "/var/log/traefik/sonar/access.log"
+  filePath: "/var/log/traefik/access.log"
   format: json
   filters:
     statusCodes:
@@ -56,14 +56,17 @@ accessLog:
       - "500-599"
     retryAttempts: true
     minDuration: "10ms"
-#experimental:
-#  plugins:
-#    plugin-log4shell:
-#      moduleName: "github.com/traefik/plugin-log4shell"
-#      version: "v0.1.2"
-#    fail2ban:
-#      moduleName: "github.com/tomMoulard/fail2ban"
-#      version: "v0.6.6"
-#    crowdsec-bouncer-traefik-plugin:
-#      moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
-#      version: "v1.1.2"
+experimental:
+  plugins:
+    plugin-log4shell:
+      moduleName: "github.com/traefik/plugin-log4shell"
+      version: "v0.1.2"
+    ldapAuth:
+      moduleName: "github.com/wiltonsr/ldapAuth"
+      version: "v0.1.5"
+    cloudflarewarp:
+      moduleName: "github.com/BetterCorp/cloudflarewarp"
+      version: "v1.3.3"
+    traefik-jwt-plugin:
+      moduleName: "github.com/team-carepay/traefik-jwt-plugin"
+      version: "v0.6.0"

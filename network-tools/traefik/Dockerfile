@@ -26,8 +26,9 @@ RUN \
 # See https://github.com/GoogleContainerTools/distroless for details
 FROM gcr.io/distroless/static:debug
 SHELL ["/busybox/sh", "-c"]
-RUN mkdir -p /etc/traefik/dynamic
-RUN mkdir -p /traefik/certs
+RUN mkdir -p /etc/traefik/dynamic; \
+    mkdir -p /traefik/certs; \
+    mkdir -p /var/log/traefik
 COPY --chmod=755 --from=bin-download /usr/local/bin/traefik /usr/local/bin/traefik
 COPY config/traefik.yml /
 COPY config/tls.yml /etc/traefik/dynamic
