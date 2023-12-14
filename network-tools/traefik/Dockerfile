@@ -24,10 +24,12 @@ RUN \
 
 # Use distroless as minimal base image to package traefik binary
 # See https://github.com/GoogleContainerTools/distroless for details
-FROM gcr.io/distroless/static
-RUN mkdir -p /etc/traefik/dynamic/ /traefik/certs 
-COPY --chmod=755 --from=bin-download /usr/local/bin/traefik /
+FROM gcr.io/distroless/static:debug
+SHELL ["/busybox/sh", "-c"]
+RUN mkdir -p /etc/traefik/dynamic
+RUN mkdir -p /traefik/certs
+COPY --chmod=755 --from=bin-download /usr/local/bin/traefik /usr/local/bin/traefik
 COPY config/traefik.yml /
 COPY config/tls.yml /etc/traefik/dynamic
 COPY /certs /traefik/certs
-ENTRYPOINT ["/traefik"]
+ENTRYPOINT ["/usr/local/bin/traefik"]
