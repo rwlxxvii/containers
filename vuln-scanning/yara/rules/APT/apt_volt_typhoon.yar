@@ -4,6 +4,7 @@ rule ShellJSP {
 
         author = "Joint Cybersecurity Advisory"
         info = "People's Republic of China State-Sponsored Cyber Actor Living off the Land to Evade Detection"
+        description = "https://node-security.com/posts/jsp-war-shell/"
 
     strings:
 
@@ -26,7 +27,8 @@ rule EncryptJSP {
 
         author = "Joint Cybersecurity Advisory"
         info = "People's Republic of China State-Sponsored Cyber Actor Living off the Land to Evade Detection"
-        
+        description = "https://www.codejava.net/coding/file-encryption-and-decryption-simple-example"
+
     strings:
         $s1 = "AEScrypt"
         $s2 = "AES/CBC/PKCS5Padding"
@@ -45,9 +47,12 @@ rule EncryptJSP {
 
 rule CustomFRPClient {
 
-   meta:
+    meta:
 
-        description=”Identify instances of the actor's custom FRP tool based on unique strings chosen by the actor and included in the tool”
+        author = "Joint Cybersecurity Advisory"
+        info = "People's Republic of China State-Sponsored Cyber Actor Living off the Land to Evade Detection"
+        description = ”Identify instances of the actor's custom FRP tool based on unique strings chosen by the actor and included in the tool”
+        reference = "https://github.com/fatedier/frp"
 
    strings:
 
@@ -65,10 +70,13 @@ rule CustomFRPClient {
 
 rule HACKTOOL_FRPClient {
 
-   meta:
+    meta:
 
-        description=”Identify instances of FRP tool (Note: This tool is known to be used by multiple actors, so hits would not necessarily imply activity by the specific actor described in this report)”
-
+        author = "Joint Cybersecurity Advisory"
+        info = "People's Republic of China State-Sponsored Cyber Actor Living off the Land to Evade Detection"
+        description = ”Identify instances of FRP tool (Note: This tool is known to be used by multiple actors, so hits would not necessarily imply activity by the specific actor described in this report)”
+        reference = "https://github.com/fatedier/frp"
+        
    strings:
 
         $s1 = "%!PS-Adobe-" nocase ascii wide
