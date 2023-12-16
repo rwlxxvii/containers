@@ -1,4 +1,4 @@
-FROM debian:bookworm-20231009-slim
+FROM docker.io/debian:bullseye
 WORKDIR /var/lib/postgresql
 
 COPY --chmod=755 scripts/postgres-install /scripts
