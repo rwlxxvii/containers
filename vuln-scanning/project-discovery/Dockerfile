@@ -134,9 +134,11 @@ RUN \
         chromium \
         nmap \
         libpcap \
-        nmap-scripts
+        nmap-scripts; \
+    mkdir /cloudlist
 
 COPY --chmod=755 --from=go-builder /go/bin /usr/local/bin
+COPY cloudlist/config.yml /cloudlist
 
 # smoke tests
 RUN \
