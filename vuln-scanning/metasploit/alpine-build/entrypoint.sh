@@ -22,6 +22,24 @@ mkdir /home/$USER/.bundle
 bundle install
 EOF
 
+apk del --no-network --purge \
+  alpine-sdk \
+	build-base \
+	ruby-dev \
+	libffi-dev\
+	openssl-dev \
+	readline-dev \
+	sqlite-dev \
+	postgresql-dev \
+	libpcap-dev \
+	libxml2-dev \
+	yaml-dev \
+	zlib-dev \
+	ncurses-dev \
+	bison \
+	autoconf
+rm -rf /var/cache/apk/*
+
 for MSF in $(ls msf*); do
 	if ! [ -L /usr/local/bin/$MSF ]; then
 		ln -s /opt/metasploit-framework/$MSF /usr/local/bin/$MSF;
@@ -55,65 +73,6 @@ mkdir -p /var/run/postgresql
 mkdir -p /var/log/postgresql
 chown -R postgres "$PGDATA" /var/run/postgresql /var/log/postgresql
 
-<<comment
-if [ -z "$(ls -A "$PGDATA")" ]; then
-    su-exec postgres initdb
-    sed -ri "s/^#(listen_addresses\s*=\s*)\S+/\1'*'/" "$PGDATA"/postgresql.conf
-
-    : ${POSTGRES_USER:="$DBUSER"}
-    : ${POSTGRES_DB:="$DBNAME"}
-
-    if [ "$POSTGRES_PASSWORD" ]; then
-      pass="PASSWORD '$DBPASS'"
-      authMethod=md5
-    else
-      echo "==============================="
-      echo "!!! NO PASSWORD SET !!! (Use \$POSTGRES_PASSWORD env var)"
-      echo "==============================="
-      pass=
-      authMethod=trust
-    fi
-    echo
-
-
-    if [ "$POSTGRES_DB" != 'postgres' ]; then
-      createSql="CREATE DATABASE $POSTGRES_DB;"
-      echo $createSql | su-exec postgres postgres --single -jE
-      echo
-    fi
-
-    if [ "$POSTGRES_USER" != 'postgres' ]; then
-      op=CREATE
-    else
-      op=ALTER
-    fi
-
-    userSql="$op USER $POSTGRES_USER WITH SUPERUSER $pass;"
-    echo $userSql | su-exec postgres postgres --single -jE
-    echo
-
-    su-exec postgres pg_ctl -D "$PGDATA" \
-        -o "-c listen_addresses='localhost'" \
-        -w start -l /var/log/postgresql/msfdb.log
-    echo
-    psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"
-    echo
-    su-exec postgres pg_ctl -D "$PGDATA" -m fast -w stop
-    echo
-    echo "host all all 0.0.0.0/0 $authMethod" >> "$PGDATA"/pg_hba.conf
-    exec "$@"
-
-fi
-
-mkdir -p /run/openrc/exclusive
-
-# Configuration
-/etc/init.d/postgresql setup
-/etc/init.d/postgresql start
-psql -U postgres -c
-comment
-
-# reduce to just what is needed to get msf to connect to psql
 su-exec postgres initdb
 sed -ri "s/^#(listen_addresses\s*=\s*)\S+/\1'*'/" "$PGDATA"/postgresql.conf
 

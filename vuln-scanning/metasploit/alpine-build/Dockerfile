@@ -182,13 +182,11 @@ RUN \
 	    ruby-activesupport \
         ruby-bigdecimal \
 	    ncurses \
-        nmap \
-        runc; \
+        nmap; \
     \
-    rm -rf /var/cache/apk/*; \
     gem install -N wirble sqlite3 bundler; \
-    mkdir -p /opt; cd /opt; \
-    git clone https://github.com/rapid7/metasploit-framework
+    mkdir -p /opt/metasploit-framework; \
+    git clone https://github.com/rapid7/metasploit-framework /opt/metasploit-framework
 
 COPY --chmod=755 entrypoint.sh /opt/metasploit-framework
 WORKDIR /opt/metasploit-framework
