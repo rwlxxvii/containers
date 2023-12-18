@@ -1,10 +1,76 @@
-## after building image -
+## setting up the environment docker|podman
+```sh
+# docker
+### ubuntu/debian
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+
+sudo apt-get install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin
+
+### rhel/alma/oracle/rocky
+sudo dnf install -y yum-utils
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf update -y
+sudo dnf install \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin
+
+# podman
+
+### ubuntu/debian
+sudo apt install -y podman podman-compose
+
+### rhel/alma/oracle/rocky
+sudo dnf install -y epel-release
+sudo dnf update -y
+sudo dnf install -y podman podman-compose
+```
+## building docker images
+```sh
+cd /dir/with/Dockerfile
+docker|podman build -t <name of image> .
+
+# podman defaults to OCI format, to change to docker image format
+podman build -t <name of image> --format=docker .
+```
+## composing up
+```sh
+docker|podman-compose up -f <compose.yml> -d
+```
+## running image as container
+```sh
+# most images can be ran within a users namespace and not as root, unless host capabilities need to be added for runtime.
+docker|podman run --rm -it --name <name of container> \
+  -v <bind volume>:<bind volume> \
+  -p <port mappings>:<port mappings> \
+  -d <name of image>:<tag>
+```
+## after building image -
 ```sh
 # prune build environment
 docker|podman image prune -f
 
 # squash final image
+dnf|apt install -y python3 python3-pip
 pip install --user https://github.com/goldmann/docker-squash/archive/master.zip
 
 # example
