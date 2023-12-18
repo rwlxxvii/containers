@@ -62,7 +62,7 @@ RUN \
       wget \
       unzip \
       npm; \
-    wget --progress=bar:force https://github.com/wapiti-scanner/wapiti/archive/refs/tags/${VER}.zip; \
+    wget https://github.com/wapiti-scanner/wapiti/archive/refs/tags/${VER}.zip; \
     unzip ${VER}.zip
 
 WORKDIR /tmp/wapiti-${VER}
@@ -119,7 +119,7 @@ COPY --chmod=755 el9-container-hardening.sh .
 
 RUN \
     bash -c "./el9-container-hardening.sh"; \
-    wget --progress=bar:force https://security.almalinux.org/oval/org.almalinux.alsa-9.xml; \
+    wget https://security.almalinux.org/oval/org.almalinux.alsa-9.xml; \
     oscap oval eval --report sonarqube-alma9-cve-report.html org.almalinux.alsa-9.xml || :; \
     oscap ds sds-validate /usr/share/xml/scap/ssg/content/${BENCHMARK} \ && echo "ok" || echo "exit code = $? not ok"; \
     oscap xccdf eval --profile ${SCAP_PROFILE} --results sonarqube_alma9-${SCAP_SNAME}-scap-report.xml \

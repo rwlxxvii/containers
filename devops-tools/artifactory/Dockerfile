@@ -20,7 +20,7 @@ RUN \
     echo "networkaddress.cache.ttl=5" >> "${JAVA_HOME}/conf/security/java.security"; \
     sed --in-place --expression="s?securerandom.source=file:/dev/random?securerandom.source=file:/dev/urandom?g" "${JAVA_HOME}/conf/security/java.security"; \
     \
-    wget --progress=bar:force https://releases.jfrog.io/artifactory/artifactory-rpms/artifactory-rpms.repo -O jfrog-artifactory-rpms.repo; \
+    wget https://releases.jfrog.io/artifactory/artifactory-rpms/artifactory-rpms.repo -O jfrog-artifactory-rpms.repo; \
     mv jfrog-artifactory-rpms.repo /etc/yum.repos.d/; \
     microdnf install -y jfrog-artifactory-oss; \
     \

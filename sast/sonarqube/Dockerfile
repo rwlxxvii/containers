@@ -78,8 +78,8 @@ RUN \
                             hkps://pgp.mit.edu) ; do \
         gpg --batch --keyserver "${server}" --recv-keys 679F1EE92B19609DE816FDE81DB198F93525EC1A && break || : ; \
     done; \
-    wget --progress=bar:force -O sonarqube.zip ${SONARQUBE_ZIP_URL}; \
-    wget --progress=bar:force -O sonarqube.zip.asc ${SONARQUBE_ZIP_URL}.asc; \
+    wget -O sonarqube.zip ${SONARQUBE_ZIP_URL}; \
+    wget -O sonarqube.zip.asc ${SONARQUBE_ZIP_URL}.asc; \
     gpg --batch --verify sonarqube.zip.asc sonarqube.zip; \
     unzip -q sonarqube.zip; \
     mv sonarqube-${SONARQUBE_VERSION} sonarqube; \
@@ -97,7 +97,7 @@ ARG BENCHMARK=ssg-almalinux9-ds.xml
 #COPY --chmod=755 scan_jars.sh .
 
 RUN \
-    wget --progress=bar:force https://security.almalinux.org/oval/org.almalinux.alsa-9.xml; \
+    wget https://security.almalinux.org/oval/org.almalinux.alsa-9.xml; \
     oscap oval eval --report sonarqube-alma9-cve-report.html org.almalinux.alsa-9.xml || :; \
     oscap ds sds-validate /usr/share/xml/scap/ssg/content/${BENCHMARK} \ && echo "ok" || echo "exit code = $? not ok"; \
     oscap xccdf eval --profile ${SCAP_PROFILE} --results sonarqube_alma9-${SCAP_SNAME}-scap-report.xml \
@@ -145,9 +145,9 @@ RUN \
 #    echo -e $'key = ${TMICRO_KEY} \n\
 #    secret = ${TMICO_SECRET}' | tee ${SONARQUBE_HOME}/lib/trend_app_protect.properties; \
 # datadog java trace monitoring
-#    wget --progress=bar:force https://dtdg.co/latest-java-tracer -O ${SONARQUBE_HOME}/lib/dd-java-agent.jar; \
+#    wget https://dtdg.co/latest-java-tracer -O ${SONARQUBE_HOME}/lib/dd-java-agent.jar; \
 # elastic APM
-#    wget --progress=bar:force https://oss.sonatype.org/service/local/artifact/maven/redirect?r=releases&g=co.elastic.apm&a=elastic-apm-agent&v=LATEST \
+#    wget https://oss.sonatype.org/service/local/artifact/maven/redirect?r=releases&g=co.elastic.apm&a=elastic-apm-agent&v=LATEST \
 #    -O ${SONARQUBE_HOME}/lib/elastic-apm-agent.jar; \
     tini_bin="" ; \
     case "$(arch)" in \

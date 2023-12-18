@@ -23,7 +23,7 @@ ENV URL="https://code.onedev.io/~downloads/projects/160/builds/4442/artifacts/on
     
 RUN \
     apk add --no-cache -t .onedev-download wget unzip; \
-    wget --progress=bar:force -O /tmp/onedev.zip ${URL}; \
+    wget -O /tmp/onedev.zip ${URL}; \
     echo "$SHA /tmp/onedev.zip" | sha256sum -c - ; \
     unzip /tmp/onedev.zip -d /tmp/onedev; \
     rm -f /tmp/onedev.zip; \

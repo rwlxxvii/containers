@@ -22,9 +22,9 @@ ENV GITLAB_RUNNER_VERSION="16.5.0" \
     DOCKER_MACHINE_VERSION="0.16.2-gitlab.22"
     
 RUN \
-    wget --progress=bar:force -O /usr/bin/gitlab-runner \
+    wget -O /usr/bin/gitlab-runner \
     https://gitlab-runner-downloads.s3.amazonaws.com/v${GITLAB_RUNNER_VERSION}/binaries/gitlab-runner-linux-amd64; \
-    wget --progress=bar:force -O /usr/bin/docker-machine \
+    wget -O /usr/bin/docker-machine \
     -q https://gitlab.com/gitlab-org/ci-cd/docker-machine/-/releases/v${DOCKER_MACHINE_VERSION}/downloads/docker-machine-Linux-x86_64
 
 FROM base

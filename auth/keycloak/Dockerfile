@@ -37,7 +37,7 @@ RUN \
         perl \
         vim \
         wget; \
-    wget --progress=bar:force https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz; \
+    wget https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz; \
     tar -zxvf openssl-${OPENSSL_VERSION}.tar.gz; \
     cd openssl-${OPENSSL_VERSION}; \
     ./Configure \
