@@ -5,9 +5,13 @@ services:
     image: ${DOCKER_REGISTRY}/jfrog/artifactory-oss:${ARTIFACTORY_VERSION}
     container_name: artifactory
     env_file:
-    - .setup-env
+      - .setup-env
     environment:
       - JF_ROUTER_ENTRYPOINTS_EXTERNALPORT=${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT}
+      - DB_TYPE=postgresql
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXTRA_JAVA_OPTIONS=-Xms512m -Xmx4g
     ports:
       - ${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT}:${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT} # for router communication
       - 8081:8081 # for artifactory communication
@@ -31,7 +35,7 @@ services:
     image: ${DOCKER_REGISTRY}/jfrog/nginx-artifactory:${ARTIFACTORY_VERSION}
     container_name: nginx
     env_file:
-    - .setup-env
+      - .setup-env
     depends_on:
       - artifactory
     network_mode: service:artifactory
@@ -43,10 +47,6 @@ services:
       - NGINX_LOG_ROTATE_COUNT=${NGINX_LOG_ROTATE_COUNT}
       - NGINX_LOG_ROTATE_SIZE=${NGINX_LOG_ROTATE_SIZE}
       - SSL=true
-      - DB_TYPE=postgresql
-      - DB_USER=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
-      - EXTRA_JAVA_OPTIONS=-Xms512m -Xmx4g
     restart: always
     logging:
       driver: json-file
@@ -63,7 +63,7 @@ services:
     image: ${DOCKER_REGISTRY}/postgres:13.10-alpine
     container_name: postgresql
     env_file:
-    - .setup-env
+      - .setup-env
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
