@@ -114,7 +114,7 @@ for pkg in \
         "ca-certificates"
 do
     if [[ $(dpkg-query -W -f='${Status}' $pkg 2>/dev/null | grep -c "ok installed") -eq 0 ]] ; then
-        echo "packages are installed."
+        log_info "packages are installed."
         else
             log_err "required packages are not installed."
     fi
@@ -122,7 +122,7 @@ done
 
 add_postgres_repo
 if grep "bullseye-pgdg main 15" /etc/apt/sources.list.d/pgdg.list &>/dev/null; then
-    echo "postgres repo is added."
+    log_info "postgres repo is added."
 else
     log_err "the postgres repo has not been added."
 fi
@@ -133,7 +133,7 @@ for pkg in \
         "postgresql-15"
 do
     if [[ $(dpkg-query -W -f='${Status}' $pkg 2>/dev/null | grep -c "ok installed") -eq 0 ]] ; then
-        echo "postgresql packages are installed."
+        log_info "postgresql packages are installed."
         else
             log_err "required postgresql packages are not installed."
     fi
@@ -145,7 +145,7 @@ for pkg in \
         "postgresql-15-auto-failover"
 do
     if [[ $(dpkg-query -W -f='${Status}' $pkg 2>/dev/null | grep -c "ok installed") -eq 0 ]] ; then
-        echo "pg auto failover packages are installed."
+        log_info "pg auto failover packages are installed."
         else
             log_err "required pg auto failover packages are not installed."
     fi
@@ -153,14 +153,14 @@ done
 
 install_walg
 if [[ -f /usr/local/bin/wal-g ]] ; then
-    echo "wal-g bin is present."
+    log_info "wal-g bin is present."
 else
     log_err "wal-g is not installed."
 fi
 
 install_locales
 if [[ $(dpkg-query -W -f='${Status}' locales 2>/dev/null | grep -c "ok installed") -eq 0 ]] ; then
-    echo "locales is installed."
+    log_info "locales is installed."
 else
     log_err "locales is not installed."
 fi
