@@ -1,13 +1,12 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-export POSTGRES_HOST_AUTH_METHOD=scram-sha-256
-export POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+source /scripts/.env
+export POSTGRES_HOST_AUTH_METHOD=${POSTGRES_HOST_AUTH_METHOD}
+export POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
 RED='\033[0;31m'
 BLUE='\033[0;34m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 ORANGE='\033[0;33m'
 NC='\033[0m'
 
@@ -15,13 +14,6 @@ log_info() {
     msg=$1
     date=$(date "+%Y-%m-%d %H:%M:%S")
     echo -e "${BLUE}INFO${NC}[${date}] postgresql_setup: ${msg}"
-}
-
-log_fatal() {
-    msg=$1
-    date=$(date "+%Y-%m-%d %H:%M:%S")
-    echo -e "${RED}FATA${NC}[${date}] postgresql_setup: ${msg}" 1>&2 
-    exit 1
 }
 
 log_warn() {
@@ -81,14 +73,14 @@ docker_create_db_directories() {
 			find "$POSTGRES_INITDB_WALDIR" \! -user postgres -exec chown postgres '{}' +
 		fi
 		chmod 700 "$POSTGRES_INITDB_WALDIR"
-		else
-		log_err "Could not create the transaction log directory."
+		log_info "Created the transaction log directory."
 	fi
 
 	# allow the container to be started with `--user`
 	if [ "$user" = '0' ]; then
 		find "$PGDATA" \! -user postgres -exec chown postgres '{}' +
 		find /var/run/postgresql \! -user postgres -exec chown postgres '{}' +
+		log_info "container will start with --user."
 	fi
 }
 
