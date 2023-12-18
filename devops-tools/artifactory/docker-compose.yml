@@ -1,134 +1,86 @@
-version: "3"
-
-volumes:
-  artifactory-postgres:
-  artifactory-postgres-backups:
-
-networks:
-  artifactory-net:
-
-x-common-vars-apps: &common-vars-apps
-  security_opt:
-    - no-new-privileges:true
-  networks:
-    - artifactory-net
-  env_file:
-    - .env
-  restart: unless-stopped
+version: '3'
 
 services:
-  postgresql:
-    <<: *common-vars-apps
-    image: docker.io/bitnami/postgresql:latest
-    container_name: postgres-artifactory
-    hostname: postgres-artifactory.dev.io
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
-      start_period: 20s
-      interval: 30s
-      retries: 5
-      timeout: 5s
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - artifactory-postgres:/bitnami/postgresql:z
-    environment:
-      POSTGRESQL_REPLICATION_MODE: master
-      POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
-      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
-      POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
-      POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
-      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
-    ports:
-      - 5432:5432
-    deploy:
-      mode: global
-      resources:
-        limits:
-          memory: 2048M
-        reservations:
-          memory: 512M
-
   artifactory:
-    <<: *common-vars-apps
-    build:
-      context: ./
+    image: ${DOCKER_REGISTRY}/jfrog/artifactory-oss:${ARTIFACTORY_VERSION}
     container_name: artifactory
-    hostname: artifactory.dev.io
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-    command:
-      - sh
-      - -c
-      - |
-        echo "type: postgresql" | tee -a /opt/jfrog/artifactory/var/etc/system.yaml
-        && echo "driver: org.postgresql.Driver" | tee -a /opt/jfrog/artifactory/var/etc/system.yaml
-        && echo -e "url: "jdbc:postgresql://postgres-artifactory.dev.io:5432/${POSTGRESQL_DATABASE}" | tee -a /opt/jfrog/artifactory/var/etc/system.yaml
-        && echo -e "username: ${POSTGRESQL_USERNAME}" | tee -a /opt/jfrog/artifactory/var/etc/system.yaml
-        && echo -e "password: ${POSTGRESQL_PASSWORD}" | tee -a /opt/jfrog/artifactory/var/etc/system.yaml
-        && /opt/jfrog/artifactory/app/bin/artifactoryctl
-    depends_on:
-      postgresql:
-        condition: service_healthy
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      resources:
-        limits:
-          memory: 2048M
-        reservations:
-          memory: 512M
-
-  backups:
-    <<: *common-vars-apps
-    image: docker.io/bitnami/postgresql:latest
-    container_name: postgres2-artifactory
-    hostname: postgres2-artifactory.dev.io
-    command: 
-      - sh
-      - -c
-      - |
-        sleep 30m
-        && while true; do
-        pg_dump
-        -h postgres-artifactory.dev.io
-        -p 5432
-        -d "${POSTGRESQL_DATABASE}"
-        -U "${POSTGRESQL_USERNAME} | gzip > /srv/artifactory-postgres/backups/artifactory-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
-        && find /srv/artifactory-postgres/backups -type f -mtime +7 | xargs rm -f;
-        sleep 24h; done
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - artifactory-postgres:/bitnami/postgresql:z
-      - artifactory-postgres-backups:/srv/artifactory-postgres/backups:Z
+    env_file:
+    - .setup-env
     environment:
-      POSTGRESQL_REPLICATION_MODE: slave
-      POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
-      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
-      POSTGRESQL_MASTER_HOST: postgres-artifactory.dev.io
-      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+      - JF_ROUTER_ENTRYPOINTS_EXTERNALPORT=${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT}
+    ports:
+      - ${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT}:${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT} # for router communication
+      - 8081:8081 # for artifactory communication
+      - 8085:8085 # for artifactory federation communication
+    volumes:
+      - ${ROOT_DATA_DIR}/var:/var/opt/jfrog/artifactory
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000
+
+  nginx:
+    image: ${DOCKER_REGISTRY}/jfrog/nginx-artifactory:${ARTIFACTORY_VERSION}
+    container_name: nginx
+    env_file:
+    - .setup-env
     depends_on:
-      postgresql:
-        condition: service_healthy
-      artifactory:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 60s
+      - artifactory
+    network_mode: service:artifactory
+    volumes:
+      - ${ROOT_DATA_DIR}/var/data/nginx:/var/opt/jfrog/nginx
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - ART_BASE_URL=http://localhost:${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT}
+      - NGINX_LOG_ROTATE_COUNT=${NGINX_LOG_ROTATE_COUNT}
+      - NGINX_LOG_ROTATE_SIZE=${NGINX_LOG_ROTATE_SIZE}
+      - SSL=true
+      - DB_TYPE=postgresql
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXTRA_JAVA_OPTIONS=-Xms512m -Xmx4g
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000
+
+  postgres:
+    image: ${DOCKER_REGISTRY}/postgres:13.10-alpine
+    container_name: postgresql
+    env_file:
+    - .setup-env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - 5432:5432
-    deploy:
-      mode: global
-      resources:
-        limits:
-          memory: 2048M
-        reservations:
-          memory: 512M
+    volumes:
+      - ${ROOT_DATA_DIR}/var/data/postgres/data:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000
