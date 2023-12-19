@@ -20,10 +20,6 @@ x-common-vars-apps: &common-vars-apps
 services:
   postgres:
     <<: *common-vars-apps
-    #build:
-      #context: ./postgres
-      #dockerfile: Dockerfile
-    # I use bitnami's image, but you can build locally using the postgres directory. (above)
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres-onedev
     hostname: postgres-onedev.dev.io
