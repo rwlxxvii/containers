@@ -37,7 +37,7 @@ runcmd:
             [[ $? != 0 ]] && git checkout master;
         fi
     }
-    _git_clone_sub sonarqube https://github.com/rwlxxvii/apps
+    _git_clone_sub sonarqube https://github.com/rwlxxvii/containers
     cd sonarqube
     podman build -t sonarqube .
     podman run --rm -it --name sonarqube -p 9000:9000 -d sonarqube:latest
