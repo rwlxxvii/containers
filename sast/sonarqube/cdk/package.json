@@ -1,9 +1,9 @@
 {
-  "name": "easy-docker-aws",
+  "name": "sonarqube-docker-aws",
   "license": "MIT",
   "version": "0.1.0",
   "bin": {
-    "easy-docker-aws": "bin/easy-docker-aws.js"
+    "sonarqube-docker-aws": "bin/sonarqube-docker-aws.js"
   },
   "scripts": {
     "build": "tsc",

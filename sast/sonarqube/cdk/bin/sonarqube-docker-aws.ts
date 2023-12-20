@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from "@aws-cdk/core";
-import { EasyDockerAwsStack } from "../lib/easy-docker-aws-stack";
+import { SonarqubeDockerAwsStack } from "../lib/sonarqube-docker-aws-stack";
 
 const app = new cdk.App();
 const stackProps = {
@@ -10,4 +10,4 @@ const stackProps = {
   },
 };
 
-new EasyDockerAwsStack(app, "EasyDockerAwsStack", stackProps);
+new SonarqubeDockerAwsStack(app, "SonarqubeDockerAwsStack", stackProps);
