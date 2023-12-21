@@ -22,6 +22,7 @@ RUN \
     cd siege-3.1.4; \
     ./configure; \
     make install; \
+    cd /; \
     rm -rf siege-3.1.4; \
     rm -f siege-3.1.4.tar.gz; \
     apk del --no-network .siege-deps; \
@@ -36,7 +37,10 @@ RUN \
         npm; \
     \
     # Install cdk packages
-    pip3 install --user --upgrade awslogs; \
+    python3 -m venv cdk; \
+    . cdk/bin/activate; \
+    pip3 install --upgrade awslogs; \
+    pip3 install -r requirements.txt; \
     \
     #  Verify environment variables required to communicate with AWS API's via the cli tools
     export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}; \
@@ -48,7 +52,6 @@ RUN \
     aws iam get-role --role-name "AWSServiceRoleForECS" || aws iam create-service-linked-role --aws-service-name "ecs.amazonaws.com"; \
     \
     npm install -g aws-cdk; \
-    pip install -r requirements.txt; \
     \
     cdk bootstrap aws://$AWS_ACCOUNT_ID/$AWS_DEFAULT_REGION; \
     cdk synth; \
