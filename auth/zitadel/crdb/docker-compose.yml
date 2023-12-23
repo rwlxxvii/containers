@@ -1,0 +1,15 @@
+version: '3'
+
+volumes:
+  cockroach-data:
+  
+services:
+
+ crdb:
+   image: cockroachdb/cockroach:v19.2.2
+   ports:
+     - "26257:26257"
+     - "8080:8080"
+   command: start-single-node --insecure
+   volumes:
+     - cockroach-data:/cockroach/cockroach-data:Z
