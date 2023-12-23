@@ -19,7 +19,7 @@
             <quota>default</quota>
         </default>
         <api>
-            <password>api</password>
+            <password>#####<!!!!!!!!!!!!>#####</password>
             <profile>default</profile>
             <networks>
                 <ip>::/0</ip>
@@ -27,7 +27,7 @@
             <quota>default</quota>
         </api>
         <aggregator>
-            <password>aggregator</password>
+            <password>#####<!!!!!!!!!!!!>#####</password>
             <profile>default</profile>
             <networks>
                 <ip>::/0</ip>
@@ -35,7 +35,7 @@
             <quota>default</quota>
         </aggregator>
         <worker>
-            <password>worker</password>
+            <password>#####<!!!!!!!!!!!!>#####</password>
             <profile>default</profile>
             <networks>
                 <ip>::/0</ip>
