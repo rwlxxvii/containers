@@ -9,22 +9,23 @@ ARG AWS_DEFAULT_REGION
 ARG AWS_REGION
 ARG AWS_ACCOUNT_ID
 
+ENV SIEGE_VER 4.1.6
 COPY cdk/ .
 
 # Install prerequisite packages
 RUN \
-    apk add --no-cache .t .siege-deps \
+    apk add --no-cache -t .siege-deps \
         curl \
         g++ \
         make; \
-    curl http://download.joedog.org/siege/siege-3.1.4.tar.gz > siege-3.1.4.tar.gz; \
-    tar -xf siege-3.1.4.tar.gz \
-    cd siege-3.1.4; \
+    curl https://download.joedog.org/siege/siege-${SIEGE_VER}.tar.gz; \
+    tar -xf siege-${SIEGE_VER}.tar.gz \
+    cd siege-${SIEGE_VER}; \
     ./configure; \
     make install; \
     cd /; \
-    rm -rf siege-3.1.4; \
-    rm -f siege-3.1.4.tar.gz; \
+    rm -rf siege-${SIEGE_VER}; \
+    rm -f siege-${SIEGE_VER}.tar.gz; \
     apk del --no-network .siege-deps; \
     \
     apk add --no-cache \
