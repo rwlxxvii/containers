@@ -3,13 +3,26 @@ version: '3'
 volumes:
   cockroach-data:
   
+networks:
+  zitadel:
+
 services:
 
- crdb:
-   image: cockroachdb/cockroach:v19.2.2
-   ports:
-     - "26257:26257"
-     - "8080:8080"
-   command: start-single-node --insecure
-   volumes:
-     - cockroach-data:/cockroach/cockroach-data:Z
+  crdb:
+    restart: 'always'
+    networks:
+      - 'zitadel'
+    image: 'cockroachdb/cockroach:latest'
+    command: 'start-single-node --insecure'
+    volumes:
+      - cockroach-data:/cockroach/cockroach-data:Z
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health?ready=1"]
+      interval: '10s'
+      timeout: '30s'
+      retries: 5
+      start_period: '20s'
+    ports:
+      - '9090:8080'
+      - '26257:26257'
+      - '8080:8080'

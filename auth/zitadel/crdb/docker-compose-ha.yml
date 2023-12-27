@@ -15,6 +15,15 @@ services:
     depends_on:
       - crdb-0
 
+  crdb-2:
+    container_name: crdb-2
+    hostname: crdb-2
+    image: cockroachdb/cockroach:latest
+    command: start --cluster-name=example-haproxy-with-init --logtostderr=WARNING --log-file-verbosity=WARNING --insecure --join=crdb-0
+    depends_on:
+      - crdb-0
+      - crdb-1
+      
   lb:
     container_name: lb
     hostname: lb
@@ -24,10 +33,11 @@ services:
       - "8080:8080"
       - "8081:8081"
     environment:
-      - NODES=crdb-0 crdb-1
+      - NODES=crdb-0 crdb-1 crdb-2
     depends_on:
       - crdb-0
       - crdb-1
+      - crdb-2
 
   crdb-init:
     container_name: crdb-init
