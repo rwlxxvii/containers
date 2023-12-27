@@ -15,11 +15,12 @@ COPY cdk/ .
 # Install prerequisite packages
 RUN \
     apk add --no-cache -t .siege-deps \
-        curl \
+        wget \
         g++ \
-        make; \
-    curl https://download.joedog.org/siege/siege-${SIEGE_VER}.tar.gz; \
-    tar -xf siege-${SIEGE_VER}.tar.gz \
+        make \
+        zlib-dev; \
+    wget https://download.joedog.org/siege/siege-${SIEGE_VER}.tar.gz; \
+    tar -xf siege-${SIEGE_VER}.tar.gz; \
     cd siege-${SIEGE_VER}; \
     ./configure; \
     make install; \
