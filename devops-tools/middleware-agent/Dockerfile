@@ -121,7 +121,7 @@ RUN apk add --no-cache \
     go get -d -v ./...; \
     go mod tidy
 
-ENV AGENT_VERSION="1.1.0-1"
+ENV AGENT_VERSION="1.2.0"
 
 RUN CGO_ENABLED=0 go build -ldflags "-s -w -X main.agentVersion=${AGENT_VERSION}" -o /tmp/mw-agent cmd/host-agent/main.go
 
