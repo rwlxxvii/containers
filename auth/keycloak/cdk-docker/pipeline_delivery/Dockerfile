@@ -5,7 +5,7 @@ ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
 
 # Configure a database vendor
-ENV KC_DB=mysql
+ENV KC_DB=postgres
 
 WORKDIR /opt/keycloak
 

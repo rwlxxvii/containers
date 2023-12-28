@@ -3,7 +3,7 @@
 AWS_DEFAULT_REGION=us-west-1
 AWS_ACCOUNT={replacewithyourawsaccount}
 AWS_ECR_REPO=keycloak
-COMMIT_HASH="21.1.1"
+COMMIT_HASH="22.0.5"
 
 # You can alter these values, but the defaults will work for any environment
 
