@@ -1,15 +1,31 @@
-from aws_cdk import App
+#!/usr/bin/env python3
+import os
 
-from Base import Base
-from Pipeline import Pipeline
+import aws_cdk as cdk
+import aws_cdk.aws_rds as rds 
+import aws_cdk.aws_ecs as ecs
+from cdk_keycloak import KeyCloak, KeycloakVersion
+from aws_cdk import CfnOutput
 
-props = {'namespace': 'cdk-keycloak-pipeline'}
-app = App()
+app = cdk.App()
+env = cdk.Environment(region="{replacewithyourawsregion}", account="{replacewithyourawsaccount}")
 
-# stack for ecr, bucket, codebuild
-base = Base(app, f"{props['namespace']}-base", props)
+stack = cdk.Stack(app, "keycloak", env=env)
 
-# pipeline stack
-pipeline = Pipeline(app, f"{props['namespace']}-pipeline", base.outputs)
-pipeline.add_dependency(base)
+mysso = KeyCloak(stack, "KeyCloak",
+    certificate_arn="{replacewithyourcertificatearn}",
+    keycloak_version=KeycloakVersion.V21_0_1,
+    cluster_engine = rds.DatabaseClusterEngine.aurora_mysql(version=rds.AuroraMysqlEngineVersion.VER_2_11_2),
+    hostname = "{replacewithyourcustomdns}",
+    env = { "KEYCLOAK_FRONTEND_URL" : "{replacewithyourcustomdns}"},
+    container_image = ecs.ContainerImage.from_registry("{replacewithyourecrcontainerimage}"),
+    database_removal_policy=cdk.RemovalPolicy.DESTROY
+)
+
+CfnOutput(
+            stack,
+            id="KeyCloakSecret",
+            value=mysso.keycloak_secret.secret_full_arn,
+            description="Keycloak admin username and password"
+        )
 app.synth()
