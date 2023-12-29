@@ -27,8 +27,8 @@ ARG VER=10.6.4
 RUN \
     curl --request GET \
     --url "https://www.tenable.com/downloads/api/v2/pages/nessus/files/Nessus-${VER}-es8.x86_64.rpm" \
-    --output "Nessus-${VER}-es9.x86_64.rpm"; \
-    rpm -ivh Nessus-${VER}-es9.x86_64.rpm
+    --output "Nessus-${VER}-es8.x86_64.rpm"; \
+    rpm -ivh Nessus-${VER}-es8.x86_64.rpm
 
 FROM base
 
@@ -65,18 +65,18 @@ RUN \
 WORKDIR /home/nessus/artifacts
 ARG SCAP_PROFILE=xccdf_org.ssgproject.content_profile_stig
 ARG SCAP_SNAME=STIG
-ARG BENCHMARK=ssg-ol9-ds.xml
+ARG BENCHMARK=ssg-ol8-ds.xml
 
 COPY el8-container-hardening.sh .
 
 RUN \
     chmod +x ./el8-container-hardening.sh; \
     bash -c "./el8-container-hardening.sh"; \
-    wget https://linux.oracle.com/security/oval/com.oracle.elsa-ol9.xml.bz2; \
-    bzip2 -d com.oracle.elsa-ol9.xml.bz2; \
-    oscap oval eval --report nessus-ol9-cve-report.html com.oracle.elsa-ol9.xml || :; \
-    oscap xccdf eval --profile ${SCAP_PROFILE} --results nessus-ol9-${SCAP_SNAME}-scap-report.xml \
-    --report nessus-ol9-${SCAP_SNAME}-scap-report.html /usr/share/xml/scap/ssg/content/${BENCHMARK} || :; \
+    wget https://linux.oracle.com/security/oval/com.oracle.elsa-ol8.xml.bz2; \
+    bzip2 -d com.oracle.elsa-ol8.xml.bz2; \
+    oscap oval eval --report nessus-ol9-cve-report.html com.oracle.elsa-ol8.xml || :; \
+    oscap xccdf eval --profile ${SCAP_PROFILE} --results nessus-ol8-${SCAP_SNAME}-scap-report.xml \
+    --report nessus-ol8-${SCAP_SNAME}-scap-report.html /usr/share/xml/scap/ssg/content/${BENCHMARK} || :; \
     freshclam; \
     clamscan -rvi -l clamav_scan.log --exclude-dir="^/sys|^/dev" / || :; \
     chown -R nessus:nessus /home/nessus; \
