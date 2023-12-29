@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 # nessus: The Global Gold Standard in Vulnerability Assessment Built for the Modern Attack Surface
 ARG repo="docker.io" \
-    base_image="oraclelinux:9" \
-    image_hash="597e2e3c8e7f8462abdc3229c360a496f28337c0e0377de23ab0e22024ea7c23"
+    base_image="oraclelinux:8-slim-fips" \
+    image_hash="045f649d06d5c8461362af8b9cdec1256fa8761aacd9eecb6cf4b84d0b3013e2"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -12,18 +12,17 @@ LABEL org.opencontainers.image.name='Nessus' \
     org.opencontainers.image.url='https://www.tenable.com/products/nessus' \
     org.opencontainers.image.licenses='Tenable' \
     org.opencontainers.image.vendor='Tenable' \
-    org.opencontainers.image.schema-version='10.6.2' \
+    org.opencontainers.image.schema-version='10.6.4' \
     MAINTAINER="@rw"
     
 RUN \
-    dnf install -y epel-release dnf-plugins-core; \
-    dnf config-manager --set-enabled ol9_codeready_builder; \
-    dnf update -y; \
-    dnf install -y java-17-openjdk
+    microdnf install -y epel-release; \
+    microdnf update -y; \
+    microdnf install -y java-17-openjdk
     
 FROM base AS download
 
-ARG VER=10.6.2
+ARG VER=10.6.4
 
 RUN \
     curl --request GET \
@@ -47,7 +46,7 @@ ARG ORG=Testing
 ARG HOSTNAME=nessus.testing.io
     
 RUN \
-    dnf install -y \
+    microdnf install -y \
         clamav \
         clamav-update \
         openscap \
@@ -68,11 +67,11 @@ ARG SCAP_PROFILE=xccdf_org.ssgproject.content_profile_stig
 ARG SCAP_SNAME=STIG
 ARG BENCHMARK=ssg-ol9-ds.xml
 
-COPY el9-container-hardening.sh .
+COPY el8-container-hardening.sh .
 
 RUN \
-    chmod +x ./el9-container-hardening.sh; \
-    bash -c "./el9-container-hardening.sh"; \
+    chmod +x ./el8-container-hardening.sh; \
+    bash -c "./el8-container-hardening.sh"; \
     wget https://linux.oracle.com/security/oval/com.oracle.elsa-ol9.xml.bz2; \
     bzip2 -d com.oracle.elsa-ol9.xml.bz2; \
     oscap oval eval --report nessus-ol9-cve-report.html com.oracle.elsa-ol9.xml || :; \
@@ -83,12 +82,12 @@ RUN \
     chown -R nessus:nessus /home/nessus; \
     # incase something is found it's in the build logs
     grep -Hrn FOUND clamav_scan.log; \   
-    dnf remove -y clamav clamav-update openscap scap-security-guide wget bzip2; \
-    dnf clean all; \
+    microdnf remove -y clamav clamav-update openscap scap-security-guide wget bzip2 epel-release; \
+    microdnf clean all; \
     rm -rf /var/cache/dnf /tmp/* /var/tmp/*; \
     truncate -s 0 /var/log/*log
     
 WORKDIR /home/nessus
 USER nessus
 STOPSIGNAL SIGINT
-ENTRYPOINT ["/opt/nessus/sbin/nessus-service", "--no-root", "-p", "8834", "-D"]
+ENTRYPOINT [ "/bin/bash", "-c", "/opt/nessus/sbin/nessus-service --no-root -p 8834 -D" ]
