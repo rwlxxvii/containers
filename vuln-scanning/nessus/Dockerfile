@@ -26,7 +26,7 @@ ARG VER=10.6.4
 
 RUN \
     curl --request GET \
-    --url "https://www.tenable.com/downloads/api/v2/pages/nessus/files/Nessus-${VER}-es9.x86_64.rpm" \
+    --url "https://www.tenable.com/downloads/api/v2/pages/nessus/files/Nessus-${VER}-es8.x86_64.rpm" \
     --output "Nessus-${VER}-es9.x86_64.rpm"; \
     rpm -ivh Nessus-${VER}-es9.x86_64.rpm
 
