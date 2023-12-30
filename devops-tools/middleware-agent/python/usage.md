@@ -1,3 +1,5 @@
+## python apm
+
 ```sh
 pip install middleware-apm
 ```
@@ -11,6 +13,8 @@ tracker=MwTracker()
 ```
 
 ```sh
+# Applications running in a container require an additional environment variable.
+
 # docker
 MW_AGENT_SERVICE=<DOCKER_BRIDGE_GATEWAY_ADDRESS>
 
@@ -18,6 +22,32 @@ MW_AGENT_SERVICE=<DOCKER_BRIDGE_GATEWAY_ADDRESS>
 kubectl get service --all-namespaces | grep mw-service
 
 MW_AGENT_SERVICE=mw-service.mw-agent-ns.svc.cluster.local
+```
+
+## agent install
+
+```sh
+# docker
+
+# Copy and run the installation command.
+# Copy the command directly from the Installation page to ensure your API key and UID are correct
+MW_API_KEY=<xxxxxxxxxx> MW_TARGET=https://<uid>.middleware.io:443 \
+    bash -c "$(curl -L https://install.middleware.io/scripts/docker-install.sh)"
+# verify
+docker ps -a --filter ancestor=ghcr.io/middleware-labs/mw-host-agent:master
+
+
+# k8s
+
+# Get the current Kubernetes context and ensure that the cluster belonging
+# to this context is where you want to install MW Agent.
+kubectl config get-contexts `kubectl config current-context`
+
+MW_API_KEY=<xxxxxxxxxx> MW_TARGET=https://<uid>.middleware.io:443 \
+    bash -c "$(curl -L https://install.middleware.io/scripts/mw-kube-agent-install.sh)"
+
+# verify
+kubectl get daemonset/mw-kube-agent -n mw-agent-ns
 ```
 
 ```yaml
