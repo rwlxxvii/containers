@@ -14,12 +14,12 @@ stack = cdk.Stack(app, "keycloak", env=env)
 
 mysso = KeyCloak(stack, "KeyCloak",
     certificate_arn="{replacewithyourcertificatearn}",
-    keycloak_version=KeycloakVersion.V21_0_1,
-    cluster_engine = rds.DatabaseClusterEngine.aurora_mysql(version=rds.AuroraMysqlEngineVersion.VER_2_11_2),
+    keycloak_version=KeycloakVersion.V22_0_5,
+    cluster_engine = rds.DatabaseClusterEngine.auroraPostgres(version=rds.AuroraPostgresEngineVersion.VER_15_2),
     hostname = "{replacewithyourcustomdns}",
     env = { "KEYCLOAK_FRONTEND_URL" : "{replacewithyourcustomdns}"},
     container_image = ecs.ContainerImage.from_registry("{replacewithyourecrcontainerimage}"),
-    database_removal_policy=cdk.RemovalPolicy.DESTROY
+    database_removal_policy=cdk.RemovalPolicy.DESTROY,
 )
 
 CfnOutput(
