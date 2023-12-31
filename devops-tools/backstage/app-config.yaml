@@ -1,0 +1,28 @@
+auth:
+  # see https://backstage.io/docs/auth/ to learn about auth providers
+  environment: development
+  providers:
+    github:
+      development:
+        clientId: YOUR CLIENT ID
+        clientSecret: YOUR CLIENT SECRET
+backend:
+  database:
+    # config options: https://node-postgres.com/apis/client
+    client: pg
+    connection:
+      host: ${POSTGRES_HOST}
+      port: ${POSTGRES_PORT}
+      user: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+      # https://node-postgres.com/features/ssl
+      # ssl:
+      #   host is only needed if the connection name differs from the certificate name.
+      #   This is for example the case with CloudSQL.
+      #   host: servername in the certificate
+      #   ca:
+      #     $file: <file-path>/server.pem
+      #   key:
+      #     $file: <file-path>/client.key
+      #   cert:
+      #     $file: <file-path>/client-cert.pem
