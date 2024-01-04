@@ -9,6 +9,13 @@ write_files:
     content: |
       #!/bin/sh
       yum -y update
+      yum-config-manager --disable amzn2extra-docker
+      amazon-linux-extras install epel -y
+      yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+      curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8_S
+      yum -y install yum-plugin-copr
+      yum -y copr enable lsm5/container-selinux
+      yum -y install podman
   - path: /etc/crontab
     content: |
       0 7 * * * /usr/local/bin/yum-update
