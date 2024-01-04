@@ -19,7 +19,7 @@ runcmd:
     yum-config-manager --disable amzn2extra-docker
     amazon-linux-extras install epel -y
     yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-    curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8_S
+    curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8_Stream/devel:kubic:libcontainers:stable.repo
     yum -y install yum-plugin-copr
     yum -y copr enable lsm5/container-selinux
     yum -y install podman
