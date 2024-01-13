@@ -13,7 +13,7 @@ RUN \
 FROM base AS go-builder
 
 ENV GOPATH=/usr/local/bin/go \
-    VER=0.1.9
+    VER=0.1.10
     
 #ENV SNYK_API 
 
