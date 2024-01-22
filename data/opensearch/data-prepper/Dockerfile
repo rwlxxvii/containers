@@ -33,7 +33,7 @@ RUN \
     adduser --shell /sbin/nologin --disabled-password -h /home/dataprepper --uid 1001 --ingroup dataprepper dataprepper; \
 # temurin download
      \
-    wget --progress=bar:force https://packages.adoptium.net/artifactory/api/security/keypair/public/repositories/apk \
+    wget https://packages.adoptium.net/artifactory/api/security/keypair/public/repositories/apk \
     -O /etc/apk/keys/adoptium.rsa.pub; \
     echo '@edge http://dl-cdn.alpinelinux.org/alpine/edge/main' >> /etc/apk/repositories; \
     echo 'https://packages.adoptium.net/artifactory/apk/alpine/main' >> /etc/apk/repositories; \
@@ -43,7 +43,7 @@ RUN \
     sed --in-place --expression="s?securerandom.source=file:/dev/random?securerandom.source=file:/dev/urandom?g" "${JAVA_HOME}/conf/security/java.security"; \
 # data-prepper download
     \
-    wget --progress=bar:force "${URL}" -O /tmp/opensearch-data-prepper-${VERSION}.tar.gz; \
+    wget "${URL}" -O /tmp/opensearch-data-prepper-${VERSION}.tar.gz; \
     tar zxvf /tmp/opensearch-data-prepper-${VERSION}.tar.gz; \
     mkdir -p "${DATA_PREPPER_PATH}" /var/log/data-prepper; \
     mv /opensearch-data-prepper-${VERSION}-linux-x64/* "${DATA_PREPPER_PATH}"

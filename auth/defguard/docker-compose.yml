@@ -1,0 +1,83 @@
+version: "3"
+
+volumes:
+  defguard-db:
+
+networks:
+  defguard:
+
+x-common-vars-apps: &common-vars-apps
+  security_opt:
+    - no-new-privileges:true
+  env_file:
+    - .env
+  networks:
+    - defguard
+  restart: unless-stopped
+
+services:
+  core:
+    <<: *common-vars-apps
+    image: ghcr.io/defguard/defguard:current
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    environment:
+      DEFGUARD_DEFAULT_ADMIN_PASSWORD: ${DEFGUARD_DEFAULT_ADMIN_PASSWORD}
+      DEFGUARD_COOKIE_INSECURE: ${DEFGUARD_COOKIE_INSECURE}
+      DEFGUARD_COOKIE_DOMAIN: ${DEFGUARD_COOKIE_DOMAIN}
+      DEFGUARD_LOG_LEVEL: ${DEFGUARD_LOG_LEVEL}
+      DEFGUARD_SECRET_KEY: ${DEFGUARD_SECRET_KEY}
+      DEFGUARD_AUTH_SECRET: ${DEFGUARD_AUTH_SECRET}
+      DEFGUARD_GATEWAY_SECRET: ${DEFGUARD_GATEWAY_SECRET}
+      DEFGUARD_YUBIBRIDGE_SECRET: ${DEFGUARD_YUBIBRIDGE_SECRET}
+      DEFGUARD_DB_HOST: ${DEFGUARD_DB_HOST}
+      DEFGUARD_DB_PORT: ${DEFGUARD_DB_PORT}
+      DEFGUARD_DB_USER: ${POSTGRES_USER}
+      DEFGUARD_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DEFGUARD_DB_NAME: ${POSTGRES_DB}
+      DEFGUARD_URL: ${DEFGUARD_URL}
+      RUST_BACKTRACE: ${RUST_BACKTRACE}
+    ports:
+      # rest api
+      - "8000:8000"
+      # grpc
+      - "50055:50055"
+    depends_on:
+      - db
+
+  db:
+    <<: *common-vars-apps
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: ${PGDATA}
+    volumes:
+      - defguard-db:/var/lib/postgresql:Z
+    ports:
+      - "5432:5432"
+
+  # gateway:
+  #   image: ghcr.io/defguard/gateway:latest
+  #   environment:
+  #     DEFGUARD_GRPC_URL: http://core:50055
+  #     DEFGUARD_STATS_PERIOD: 60
+  #     DEFGUARD_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJEZWZHdWFyZCIsInN1YiI6IlRlc3ROZXQiLCJjbGllbnRfaWQiOiIiLCJleHAiOjU5NjE3NDcwNzYsIm5iZiI6MTY2Njc3OTc4MSwicm9sZXMiOltdfQ.uEUMnw_gO23W0K2q3N1lToeP0D2zAY1swr8N-84sRHA
+  #     RUST_LOG: debug
+  #   ports:
+  #     # wireguard endpoint
+  #     - "50051:50051/udp"
+  #   depends_on:
+  #     - core
+  #   cap_add:
+  #     - NET_ADMIN
+
+  proxy:
+    <<: *common-vars-apps
+    image: ghcr.io/defguard/defguard-proxy:current
+    ports:
+      - "8080:8080"
+    environment:
+      DEFGUARD_PROXY_UPSTREAM_GRPC_URL: "http://core:50055/"

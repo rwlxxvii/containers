@@ -28,7 +28,7 @@ In this way, the "terraform.tfstate" file will be stored in an S3 bucket and Dyn
 */
 
   # Terraform version
-  required_version = "~> 1.6.1"
+  required_version = "~> 1.6.6"
 
   # Terraform providers
   required_providers {
@@ -36,7 +36,7 @@ In this way, the "terraform.tfstate" file will be stored in an S3 bucket and Dyn
       source = "hashicorp/aws"
 
       # Provider versions
-      version = "~> 5.29.0"
+      version = "~> 5.31.0"
     }
 
     random = {

@@ -1,0 +1,180 @@
+version: '3'
+
+volumes:
+  hanko-postgres:
+  hanko-postgres-backups:
+
+networks:
+  hanko:
+
+x-common-vars-apps: &common-vars-apps
+  security_opt:
+    - no-new-privileges:true
+  network:
+    - hanko
+  env_file:
+    - .env
+  restart: unless-stopped
+
+services:
+  hanko-migrate:
+    <<: *common-vars-apps
+    build: backend/
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./config.yaml:/etc/config/config.yaml:ro,z
+    command: --config /etc/config/config.yaml migrate up
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 256M        
+
+  hanko:
+    <<: *common-vars-apps
+    depends_on:
+      hanko-migrate:
+        condition: service_completed_successfully
+    build: backend/
+    ports:
+      - '8000:8000' # public
+      - '8001:8001' # admin
+    command: serve --config /etc/config/config.yaml all
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./config.yaml:/etc/config/config.yaml:ro,z
+    environment:
+      - PASSWORD_ENABLED
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 256M
+
+  postgresql:
+    <<: *common-vars-apps
+    image: docker.io/bitnami/postgresql:latest
+    container_name: postgres-hanko
+    hostname: postgres-hanko.dev.io
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - hanko-postgres:/bitnami/postgresql:z
+    environment:
+      POSTGRESQL_REPLICATION_MODE: master
+      POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
+      POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
+    ports:
+      - 5432:5432
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+
+  elements:
+    <<: *common-vars-apps
+    build: frontend/
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "9500:80"
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M      
+
+  mailslurper:
+    <<: *common-vars-apps
+    image: marcopas/docker-mailslurper:latest
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - '8080:8080' # web UI
+      - '8085:8085'
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M      
+
+  backups:
+    <<: *common-vars-apps
+    image: docker.io/bitnami/postgresql:latest
+    container_name: postgres2hanko-
+    hostname: postgres2-hanko.dev.io
+    command: 
+      - sh
+      - -c
+      - |
+        sleep 30m
+        && while true; do
+        pg_dump
+        -h postgres-hanko.dev.io
+        -p 5432
+        -d "${POSTGRESQL_DATABASE}"
+        -U "${POSTGRESQL_USERNAME} | gzip > /srv/hanko-postgres/backups/hanko-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
+        && find /srv/hanko-postgres/backups -type f -mtime +7 | xargs rm -f;
+        sleep 24h; done
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - hanko-postgres:/bitnami/postgresql:z
+      - hanko-postgres-backups:/srv/hanko-postgres/backups:Z
+    environment:
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
+      POSTGRESQL_MASTER_HOST: postgres-hanko.dev.io
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      hanko:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    ports:
+      - 5432:5432
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M

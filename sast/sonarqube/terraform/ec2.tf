@@ -1,10 +1,11 @@
+# private ami
 data "aws_ami" "dev-team-sonarqube-ami" {
   most_recent = true
   owners      = ["aws-marketplace"]
 
   filter {
     name   = "product-code"
-    values = ["8fn69npzmbzcs4blc4583jd0y"]
+    values = ["_______________ "]
   }
 
   filter {
@@ -17,6 +18,11 @@ data "aws_ami" "dev-team-sonarqube-ami" {
     values = ["hvm"]
   }
 }
+
+#resource "aws_ami_from_instance" "al2023" {
+#  name               = "terraform-example"
+#  source_instance_id = "i-xxxxxxxx"
+#}
 
 data "template_file" "sonarqube_userdata" {
   template = file("cloudinit/sonarqube_instance.yml")

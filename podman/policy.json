@@ -1,0 +1,110 @@
+{
+    "_comment": "This is an example of a more secure policy, block/reject and explicitly allow only needed",
+    "default": [{"type": "reject"}], /* Reject anything not explicitly allowed */
+    "transports": {
+        "docker": {
+            /* Allow installing images from a specific repository namespace, without cryptographic verification.
+               This namespace includes images like openshift/hello-openshift and openshift/origin. */
+            "docker.io/openshift": [{"type": "insecureAcceptAnything"}],
+            /* Similarly, allow installing the “official” busybox images.  Note how the fully expanded
+               form, with the explicit /library/, must be used. */
+            "docker.io/library/busybox": [{"type": "insecureAcceptAnything"}],
+            /* Allow installing images from all subdomains */
+            "*.temporary-project.example.com": [{"type": "insecureAcceptAnything"}],
+            /* A sigstore-signed repository */
+            "hostname:5000/myns/sigstore-signed-with-full-references": [
+                {
+                    "type": "sigstoreSigned",
+                    "keyPath": "/path/to/sigstore-pubkey.pub"
+                }
+            ],
+            /* A sigstore-signed repository using the community Fulcio+Rekor servers.
+
+               The community servers’ public keys can be obtained from
+               https://github.com/sigstore/sigstore/tree/main/pkg/tuf/repository/targets .  */
+            "hostname:5000/myns/sigstore-signed-fulcio-rekor": [
+                {
+                    "type": "sigstoreSigned",
+                    "fulcio": {
+                        "caPath": "/path/to/fulcio_v1.crt.pem",
+                        "oidcIssuer": "https://github.com/login/oauth",
+                        "subjectEmail": "test-user@example.com"
+                    },
+                    "rekorPublicKeyPath": "/path/to/rekor.pub",
+                }
+            ],
+            /* A sigstore-signed repository, accepts signatures by /usr/bin/cosign */
+            "hostname:5000/myns/sigstore-signed-allows-malicious-tag-substitution": [
+                {
+                    "type": "sigstoreSigned",
+                    "keyPath": "/path/to/sigstore-pubkey.pub",
+                    "signedIdentity": {"type": "matchRepository"}
+                }
+            ],
+            /* A sigstore-signed repository using the community Fulcio+Rekor servers,
+               accepts signatures by /usr/bin/cosign.
+
+               The community servers’ public keys can be obtained from
+               https://github.com/sigstore/sigstore/tree/main/pkg/tuf/repository/targets .  */
+            "hostname:5000/myns/sigstore-signed-fulcio-rekor- allows-malicious-tag-substitution": [
+                {
+                    "type": "sigstoreSigned",
+                    "fulcio": {
+                        "caPath": "/path/to/fulcio_v1.crt.pem",
+                        "oidcIssuer": "https://github.com/login/oauth",
+                        "subjectEmail": "test-user@example.com"
+                    },
+                    "rekorPublicKeyPath": "/path/to/rekor.pub",
+                    "signedIdentity": { "type": "matchRepository" }
+                }
+            ]
+              /* Other docker: images use the global default policy and are rejected */
+        },
+        "dir": {
+            "": [{"type": "insecureAcceptAnything"}] /* Allow any images originating in local directories */
+        },
+        "atomic": {
+            /* The common case: using a known key for a repository or set of repositories */
+            "hostname:5000/myns/official": [
+                {
+                    "type": "signedBy",
+                    "keyType": "GPGKeys",
+                    "keyPath": "/path/to/official-pubkey.gpg"
+                }
+            ],
+            /* A more complex example, for a repository which contains a mirror of a third-party product,
+               which must be signed-off by local IT */
+            "hostname:5000/vendor/product": [
+                { /* Require the image to be signed by the original vendor, using the vendor's repository location. */
+                    "type": "signedBy",
+                    "keyType": "GPGKeys",
+                    "keyPath": "/path/to/vendor-pubkey.gpg",
+                    "signedIdentity": {
+                        "type": "exactRepository",
+                        "dockerRepository": "vendor-hostname/product/repository"
+                    }
+                },
+                { /* Require the image to _also_ be signed by a local reviewer. */
+                    "type": "signedBy",
+                    "keyType": "GPGKeys",
+                    "keyPath": "/path/to/reviewer-pubkey.gpg"
+                }
+            ],
+            /* A way to mirror many repositories from a single vendor */
+            "private-mirror:5000/vendor-mirror": [
+                { /* Require the image to be signed by the original vendor, using the vendor's repository location.
+                     For example, private-mirror:5000/vendor-mirror/productA/image1:latest needs to be signed as
+                     vendor.example/productA/image1:latest . */
+                    "type": "signedBy",
+                    "keyType": "GPGKeys",
+                    "keyPath": "/path/to/vendor-pubkey.gpg",
+                    "signedIdentity": {
+                        "type": "remapIdentity",
+                        "prefix": "private-mirror:5000/vendor-mirror",
+                        "signedPrefix": "vendor.example.com"
+                    }
+                }
+            ]
+        }
+    }
+}

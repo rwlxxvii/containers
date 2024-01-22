@@ -15,8 +15,7 @@ LABEL \
     org.opencontainers.image.schema-version='3.1.7'
 
 RUN \
-    microdnf install -y yum-utils; \
-    microdnf install -y epel-release; \
+    microdnf install -y yum-utils epel-release; \
     dnf config-manager --set-enabled crb; \
     /usr/bin/crb enable; \
     microdnf update -y; \
@@ -43,8 +42,7 @@ ARG VER=3.1.7
 WORKDIR /tmp
 
 RUN \
-    microdnf install -y yum-utils; \
-    microdnf install -y epel-release; \
+    microdnf install -y yum-utils epel-release; \
     dnf config-manager --set-enabled crb; \
     /usr/bin/crb enable; \
     microdnf update -y; \
@@ -62,7 +60,7 @@ RUN \
       wget \
       unzip \
       npm; \
-    wget --progress=bar:force https://github.com/wapiti-scanner/wapiti/archive/refs/tags/${VER}.zip; \
+    wget https://github.com/wapiti-scanner/wapiti/archive/refs/tags/${VER}.zip; \
     unzip ${VER}.zip
 
 WORKDIR /tmp/wapiti-${VER}
@@ -119,11 +117,11 @@ COPY --chmod=755 el9-container-hardening.sh .
 
 RUN \
     bash -c "./el9-container-hardening.sh"; \
-    wget --progress=bar:force https://security.almalinux.org/oval/org.almalinux.alsa-9.xml; \
-    oscap oval eval --report sonarqube-alma9-cve-report.html org.almalinux.alsa-9.xml || :; \
+    wget https://security.almalinux.org/oval/org.almalinux.alsa-9.xml; \
+    oscap oval eval --report wapiti-alma9-cve-report.html org.almalinux.alsa-9.xml || :; \
     oscap ds sds-validate /usr/share/xml/scap/ssg/content/${BENCHMARK} \ && echo "ok" || echo "exit code = $? not ok"; \
-    oscap xccdf eval --profile ${SCAP_PROFILE} --results sonarqube_alma9-${SCAP_SNAME}-scap-report.xml \
-    --report sonarqube_alma9-${SCAP_SNAME}-scap-report.html /usr/share/xml/scap/ssg/content/${BENCHMARK} || :; \
+    oscap xccdf eval --profile ${SCAP_PROFILE} --results wapiti_alma9-${SCAP_SNAME}-scap-report.xml \
+    --report wapiti_alma9-${SCAP_SNAME}-scap-report.html /usr/share/xml/scap/ssg/content/${BENCHMARK} || :; \
     freshclam; \
     clamscan -rvi -l clamav_scan.log --exclude-dir="^/sys|^/dev" /; \
     chown wapiti:wapiti clamav_scan.log; \

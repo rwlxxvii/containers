@@ -217,7 +217,7 @@ RUN \
     bash -c "/data/el9-container-hardening.sh"; \
     mkdir -p /home/arkime/artifacts /var/run/arkime; \
     cd /home/arkime/artifacts; \
-    wget --progress=bar:force https://security.almalinux.org/oval/org.almalinux.alsa-9.xml; \
+    wget https://security.almalinux.org/oval/org.almalinux.alsa-9.xml; \
     oscap oval eval --report arkime-alma9-cve-report.html org.almalinux.alsa-9.xml || :; \
     oscap ds sds-validate /usr/share/xml/scap/ssg/content/${BENCHMARK} \; echo "ok" || echo "exit code = $? not ok"; \
     oscap xccdf eval --profile ${SCAP_PROFILE} --results arkime_alma9-${SCAP_SNAME}-scap-report.xml \
