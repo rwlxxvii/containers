@@ -2,8 +2,8 @@
 # syft: A CLI tool and Go library for generating a Software Bill of Materials (SBOM) from container images and filesystems. 
 # grype: A vulnerability scanner for container images and filesystems.
 ARG repo="docker.io" \
-    base_image="alpine:edge" \
-    image_hash="3e44438281baf26907675b99c9a4a421c4d4a57c954120327e703aa8329086bd"
+    base_image="alpine:3.19" \
+    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -14,12 +14,12 @@ LABEL \
     org.opencontainers.image.url='https://anchore.com/opensource/' \
     org.opencontainers.image.vendor='Anchore' \
     org.opencontainers.image.licenses='Apache License 2.0' \
-    org.opencontainers.image.schema-version='Grype 0.73.4, Syft 0.98.0'
+    org.opencontainers.image.schema-version='Grype 0.74.0, Syft 0.100.0'
 
 FROM base AS go-builder
 
-ENV SYFT_VER=0.98.0 \
-    GRYPE_VER=0.73.4 \
+ENV SYFT_VER=0.100.0 \
+    GRYPE_VER=0.74.0 \
     GOPATH=/usr/local/bin/go \
     SNYK_API=
 

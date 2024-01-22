@@ -1,0 +1,32 @@
+apiVersion: atmos/v1
+kind: AtmosVendorConfig
+metadata:
+  name: aws-infra-build
+  description: Provision ec2, eks, lightsail, rds, and route53 instances test.
+spec:
+  sources:
+    - component: "ec2"
+      source: "github.com/rwlxxvii/containers.git//devops-tools/atmos/components/terraform/infra/ec2?ref={{.Version}}"
+      version: "1.0.0"
+      targets:
+        - "components/terraform/infra/ec2"
+    - component: "eks"
+      source: "github.com/rwlxxvii/containers.git//devops-tools/atmos/components/terraform/infra/eks?ref={{.Version}}"
+      version: "1.0.0"
+      targets:
+        - "components/terraform/infra/eks"
+    - component: "lightsail"
+      source: "github.com/rwlxxvii/containers.git//devops-tools/atmos/components/terraform/infra/lightsail?ref={{.Version}}"
+      version: "1.0.0"
+      targets:
+        - "components/terraform/infra/lightsail"
+    - component: "rds"
+      source: "github.com/rwlxxvii/containers.git//devops-tools/atmos/components/terraform/infra/rds?ref={{.Version}}"
+      version: "1.0.0"
+      targets:
+        - "components/terraform/infra/rds"
+    - component: "route53"
+      source: "github.com/rwlxxvii/containers.git//devops-tools/atmos/components/terraform/infra/route53?ref={{.Version}}"
+      version: "1.0.0"
+      targets:
+        - "components/terraform/infra/route53"

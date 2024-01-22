@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 # zeek: A powerful network analysis framework that is much different from the typical IDS you may know. 
 ARG repo="docker.io" \
-    base_image="alpine:3.18" \
-    image_hash="48d9183eb12a05c99bcc0bf44a003607b8e941e1d4f41f9ad12bdcc4b5672f86"
+    base_image="alpine:3.19" \
+    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS build-env
 

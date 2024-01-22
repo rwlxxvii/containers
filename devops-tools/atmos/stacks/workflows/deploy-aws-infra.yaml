@@ -1,0 +1,38 @@
+---
+import: []
+vars: {}
+
+terraform:
+  vars: {}
+
+helmfile:
+  vars: {}
+
+components:
+  terraform:
+    ec2:
+      vars: {}
+
+    eks:
+      vars: {}
+
+    lightsail:
+      vars: {}
+
+    rds:
+      vars: {}
+
+    route53:
+      vars: {}
+
+  helmfile: {}
+
+workflows:
+  deploy-all:
+    description: Deploy terraform aws infra projects in order
+    steps:
+      - command: terraform deploy infra/ec2
+      - command: terraform deploy infra/eks
+      - command: terraform deploy infra/lightsail
+      - command: terraform deploy infra/rds
+      - command: terraform deploy infra/route53                  

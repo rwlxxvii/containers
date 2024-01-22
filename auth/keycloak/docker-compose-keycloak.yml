@@ -6,17 +6,27 @@ volumes:
   traefik-certificates:
 
 networks:
-  keycloak:
-    name: keycloak
-    driver: bridge
+  traefik:
+    external: true
+
+x-common-vars-apps: &common-vars-apps
+  networks:
+    keycloak:
+      driver: bridge
+  security_opt:
+    - no-new-privileges:true
+  restart: on-failure
+  env_file:
+    - .env
 
 services:
   postgres:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: postgres
     hostname: postgres-keycloak.io
     ports:
-      - ${DB_PORT}:${DB_PORT}
+      - 5432:5432
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - keycloak-postgres:/bitnami/postgresql:z
@@ -28,16 +38,21 @@ services:
       POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRESQL_DATABASE} -U $${POSTGRESQL_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 60s
-    restart: unless-stopped
-    networks:
-      - keycloak
-      
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+
   keycloak:
+    <<: *common-vars-apps
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
     hostname: keycloak.io
@@ -51,7 +66,7 @@ services:
       CERT_KEY: ${CERT_KEY}
       DB_VENDOR: ${DB_VENDOR}
       DB_ADDR: ${DB_ADDR}
-      DB_PORT: ${DB_PORT}
+      DB_PORT: 5432
       DB_DATABASE: ${POSTGRESQL_DATABASE}
       DB_USER: ${POSTGRESQL_USER}
       DB_PASSWORD: ${POSTGRESQL_PASSWORD}
@@ -67,27 +82,38 @@ services:
       timeout: 5s
       retries: 3
       start_period: 120s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`keycloak.io`)"
-      - "traefik.http.routers.keycloak.service=keycloak"
-      - "traefik.http.routers.keycloak.entrypoints=websecure"
-      - "traefik.http.services.keycloak.loadbalancer.server.port=8077"
-      - "traefik.http.routers.keycloak.tls=true"
-      - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
-      - "traefik.http.services.keycloak.loadbalancer.passhostheader=true"
-      - "traefik.http.routers.keycloak.middlewares=compresstraefik"
-      - "traefik.http.middlewares.compresstraefik.compress=true"
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
       traefik:
         condition: service_healthy
     networks:
-      - keycloak
+      - traefik
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.keycloak.rule=Host(`keycloak.io`)"
+        - "traefik.http.routers.keycloak.service=keycloak"
+        - "traefik.http.routers.keycloak.entrypoints=websecure"
+        - "traefik.http.services.keycloak.loadbalancer.server.port=8077"
+        - "traefik.http.routers.keycloak.tls=true"
+        - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
+        - "traefik.http.services.keycloak.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.keycloak.middlewares=compresstraefik"
+        - "traefik.http.middlewares.compresstraefik.compress=true"
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   traefik:
+    <<: *common-vars-apps
     image: docker.io/traefik:latest
     container_name: traefik
     hostname: traefik.io
@@ -114,7 +140,8 @@ services:
       - "--global.sendAnonymousUsage=false"
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
+      #- $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-certificates:/etc/traefik/acme:Z
     ports:
       - "80:80"
@@ -125,40 +152,54 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.io`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
-      - "traefik.http.routers.dashboard.tls=true"
-      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
-      - "traefik.http.routers.dashboard.middlewares=authtraefik"
-      # Passwords must be encoded using MD5, SHA1, or BCrypt
-      - "traefik.http.middlewares.authtraefik.basicauth.users=traefikadmin:$$enter$$hashed$$passhere"
-      - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-    restart: unless-stopped
     networks:
-      - keycloak
+      - traefik
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dashboard.rule=Host(`traefik.io`)"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.entrypoints=websecure"
+        - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
+        - "traefik.http.routers.dashboard.tls=true"
+        - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+        - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.dashboard.middlewares=authtraefik"
+        # Passwords must be encoded using MD5, SHA1, or BCrypt
+        - "traefik.http.middlewares.authtraefik.basicauth.users=traefikadmin:$$enter$$hashed$$passhere"
+        - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
+        - "traefik.http.routers.http-catchall.entrypoints=web"
+        - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:latest
     container_name: psql-backup
     hostname: keycloak-backup-psql.io
-    command: sh -c 'sleep 30m
-             && while true; do
-             PGPASSWORD="$$(echo $$POSTGRESQL_DATABASE)"
-             pg_dump
-             -h postgres-keyloak.io
-             -p 5432
-             -d "${POSTGRESQL_DATABASE}"
-             -U "${POSTGRESQL_USERNAME} | gzip > /srv/keyloak-postgres/backups/keyloak-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
-             && find /srv/keyloak-postgres/backups -type f -mtime +7 | xargs rm -f;
-             sleep 24h; done'
+    command:
+      - sh
+      - -c
+      - |
+        sleep 30m
+        && while true; do
+        pg_dump
+        -h postgres-keyloak.io
+        -p 5432
+        -d "${POSTGRESQL_DATABASE}"
+        -U "${POSTGRESQL_USERNAME} | gzip > /srv/keyloak-postgres/backups/keyloak-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
+        && find /srv/keyloak-postgres/backups -type f -mtime +7 | xargs rm -f;
+        sleep 24h; done
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - keycloak-postgres:/bitnami/postgresql:z
@@ -167,16 +208,19 @@ services:
       POSTGRESQL_REPLICATION_MODE: slave
       POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
-      POSTGRESQL_MASTER_HOST: postgres
-      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_MASTER_HOST: postgres-keycloak.io
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
     ports:
-      - ${DB_PORT}:${DB_PORT}
-    restart: unless-stopped
+      - 5432:5432
     depends_on:
       postgres:
         condition: service_healthy
       keycloak:
         condition: service_healthy
-    networks:
-      - keycloak
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M

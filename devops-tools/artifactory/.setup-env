@@ -1,0 +1,24 @@
+## This file contains environment variables used by the docker-compose yaml files
+
+## IMPORTANT: During installation, this file may be updated based on user choices or existing configuration
+
+## Docker registry to fetch images from
+DOCKER_REGISTRY=releases-docker.jfrog.io
+
+## Version of artifactory to install
+ARTIFACTORY_VERSION=7.71.8
+
+## The Installation directory for Artifactory. IF not entered, the script will prompt you for this input. Default [$HOME/.jfrog/artifactory]
+ROOT_DATA_DIR=
+
+## Router external port mapping. This property may be overridden from the system.yaml (router.entrypoints.externalPort)
+JF_ROUTER_ENTRYPOINTS_EXTERNALPORT=8082
+
+## Nginx logrotation configuration
+NGINX_LOG_ROTATE_COUNT=
+NGINX_LOG_ROTATE_SIZE=
+
+## Postgresql variables
+POSTGRES_DB=
+POSTGRES_USER=
+POSTGRES_PASSWORD=

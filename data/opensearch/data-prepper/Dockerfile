@@ -2,8 +2,8 @@
 # opensearch data-prepper: a server-side data collector capable of filtering, enriching, transforming, normalizing, 
 # and aggregating data for downstream analytics and visualization.
 ARG repo="docker.io" \
-    base_image="alpine:3.18" \
-    image_hash="48d9183eb12a05c99bcc0bf44a003607b8e941e1d4f41f9ad12bdcc4b5672f86"
+    base_image="alpine:3.19" \
+    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
     
 FROM ${repo}/${base_image}@sha256:${image_hash}
 
@@ -33,7 +33,7 @@ RUN \
     adduser --shell /sbin/nologin --disabled-password -h /home/dataprepper --uid 1001 --ingroup dataprepper dataprepper; \
 # temurin download
      \
-    wget --progress=bar:force https://packages.adoptium.net/artifactory/api/security/keypair/public/repositories/apk \
+    wget https://packages.adoptium.net/artifactory/api/security/keypair/public/repositories/apk \
     -O /etc/apk/keys/adoptium.rsa.pub; \
     echo '@edge http://dl-cdn.alpinelinux.org/alpine/edge/main' >> /etc/apk/repositories; \
     echo 'https://packages.adoptium.net/artifactory/apk/alpine/main' >> /etc/apk/repositories; \
@@ -43,7 +43,7 @@ RUN \
     sed --in-place --expression="s?securerandom.source=file:/dev/random?securerandom.source=file:/dev/urandom?g" "${JAVA_HOME}/conf/security/java.security"; \
 # data-prepper download
     \
-    wget --progress=bar:force "${URL}" -O /tmp/opensearch-data-prepper-${VERSION}.tar.gz; \
+    wget "${URL}" -O /tmp/opensearch-data-prepper-${VERSION}.tar.gz; \
     tar zxvf /tmp/opensearch-data-prepper-${VERSION}.tar.gz; \
     mkdir -p "${DATA_PREPPER_PATH}" /var/log/data-prepper; \
     mv /opensearch-data-prepper-${VERSION}-linux-x64/* "${DATA_PREPPER_PATH}"

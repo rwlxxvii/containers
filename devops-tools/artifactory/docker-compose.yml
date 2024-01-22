@@ -1,0 +1,86 @@
+version: '3'
+
+services:
+  artifactory:
+    image: ${DOCKER_REGISTRY}/jfrog/artifactory-oss:${ARTIFACTORY_VERSION}
+    container_name: artifactory
+    env_file:
+      - .setup-env
+    environment:
+      - JF_ROUTER_ENTRYPOINTS_EXTERNALPORT=${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT}
+      - DB_TYPE=postgresql
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXTRA_JAVA_OPTIONS=-Xms512m -Xmx4g
+    ports:
+      - ${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT}:${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT} # for router communication
+      - 8081:8081 # for artifactory communication
+      - 8085:8085 # for artifactory federation communication
+    volumes:
+      - ${ROOT_DATA_DIR}/var:/var/opt/jfrog/artifactory
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000
+
+  nginx:
+    image: ${DOCKER_REGISTRY}/jfrog/nginx-artifactory:${ARTIFACTORY_VERSION}
+    container_name: nginx
+    env_file:
+      - .setup-env
+    depends_on:
+      - artifactory
+    network_mode: service:artifactory
+    volumes:
+      - ${ROOT_DATA_DIR}/var/data/nginx:/var/opt/jfrog/nginx
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - ART_BASE_URL=http://localhost:${JF_ROUTER_ENTRYPOINTS_EXTERNALPORT}
+      - NGINX_LOG_ROTATE_COUNT=${NGINX_LOG_ROTATE_COUNT}
+      - NGINX_LOG_ROTATE_SIZE=${NGINX_LOG_ROTATE_SIZE}
+      - SSL=true
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000
+
+  postgres:
+    image: ${DOCKER_REGISTRY}/postgres:13.10-alpine
+    container_name: postgresql
+    env_file:
+      - .setup-env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - ${ROOT_DATA_DIR}/var/data/postgres/data:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000

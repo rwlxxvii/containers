@@ -36,4 +36,4 @@ services:
       start_period: 5s
     networks:
       sonarnet:
-       ipv4_address: ${NGINX_IPv4}
+        ipv4_address: ${NGINX_IPv4}

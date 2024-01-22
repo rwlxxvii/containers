@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1
+# backstage: an open platform for building developer portals.
+ARG repo="quay.io/almalinuxorg" \
+    base_image="9-minimal" \
+    image_hash="dbe9e629bda941bbc557666cb8fcc184b0ce40e92eaff66eaca2aefde9e5ac35"
+
+FROM ${repo}/${base_image}@sha256:${image_hash}
+
+RUN \
+    microdnf install -y epel-release yum-utils; \
+    /usr/bin/crb enable; \
+    microdnf update -y; \
+    \
+    dnf module enable nodejs:18 -y; \
+    \
+    microdnf install -y \
+        python3 \
+        gcc \
+        gcc-c++ \
+        zlib-devel \
+        brotli-devel \
+        openssl-devel \
+        libuv-devel \
+        bash \
+        git \
+        nodejs \
+        npm \
+        wget; \
+    \
+    npm install -g npm@10.2.5; \
+    npm install -g yarn; \
+    echo "backstage" | npx --yes @backstage/create-app@latest; \
+    \
+    microdnf remove -y \
+        gcc gcc-c++ zlib-devel brotli-devel openssl-devel libuv-devel; \
+    /usr/bin/crb disable; \
+    microdnf remove -y \
+        epel-release yum-utils; \
+    microdnf clean all; \
+    rm -rf /var/cache/dnf /var/cache/yum /tmp/* /var/tmp/*; \
+    truncate -s 0 /var/log/*log
+
+EXPOSE 3000 7007
+WORKDIR /backstage
+RUN yarn add --cwd packages/backend pg
+ENTRYPOINT [ "/bin/sh", "-c", "yarn dev" ]

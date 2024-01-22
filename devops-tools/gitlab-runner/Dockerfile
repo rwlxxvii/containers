@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 # gitlab-runner: GitLab Runner is an application that works with GitLab CI/CD to run jobs in a pipeline.
 ARG repo="docker.io" \
-    base_image="alpine:edge" \
-    image_hash="3e44438281baf26907675b99c9a4a421c4d4a57c954120327e703aa8329086bd"
+    base_image="alpine:3.19" \
+    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -22,9 +22,9 @@ ENV GITLAB_RUNNER_VERSION="16.5.0" \
     DOCKER_MACHINE_VERSION="0.16.2-gitlab.22"
     
 RUN \
-    wget --progress=bar:force -O /usr/bin/gitlab-runner \
+    wget -O /usr/bin/gitlab-runner \
     https://gitlab-runner-downloads.s3.amazonaws.com/v${GITLAB_RUNNER_VERSION}/binaries/gitlab-runner-linux-amd64; \
-    wget --progress=bar:force -O /usr/bin/docker-machine \
+    wget -O /usr/bin/docker-machine \
     -q https://gitlab.com/gitlab-org/ci-cd/docker-machine/-/releases/v${DOCKER_MACHINE_VERSION}/downloads/docker-machine-Linux-x86_64
 
 FROM base

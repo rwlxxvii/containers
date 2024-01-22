@@ -1,0 +1,168 @@
+#!/bin/bash
+set -eu
+set -o pipefail
+
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+ORANGE='\033[0;33m'
+NC='\033[0m'
+
+log_info() {
+    msg=$1
+    date=$(date "+%Y-%m-%d %H:%M:%S")
+    echo -e "${BLUE}INFO${NC}[${date}] postgresql_setup: ${msg}"
+}
+
+log_warn() {
+    msg=$1
+    date=$(date "+%Y-%m-%d %H:%M:%S")
+    echo -e "${ORANGE}WARN${NC}[${date}] postgresql_setup: ${msg}"
+}
+
+log_err() {
+    msg=$1
+    date=$(date "+%Y-%m-%d %H:%M:%S")
+    echo -e "${RED}ERR${NC}[${date}] postgresql_setup: ${msg}" 1>&2
+}
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update && apt-get upgrade -y
+
+create_postgres_user() {
+    >&2 echo -e "########\nCreating postgres User\n########"
+    groupadd -r postgres --gid=1000
+    useradd -r -g postgres --uid=1000 --home-dir=/var/lib/postgresql --shell=/bin/bash postgres
+}
+
+prepare_environment() {
+    >&2 echo -e "########\nPreparing Environment\n########"
+    mkdir -p /var/lib/postgresql /var/run/postgresql /var/lib/postgresql/initdb.d
+    chown -R postgres:postgres /var/lib/postgresql /var/run/postgresql
+    apt-get install -y --no-install-recommends curl nano pspg procps gosu dnsutils gnupg git ca-certificates
+}
+
+add_postgres_repo() {
+    >&2 echo -e "########\nAdding Postgres Repo\n########"
+    echo "deb http://apt.postgresql.org/pub/repos/apt bullseye-pgdg main 15" > /etc/apt/sources.list.d/pgdg.list
+    curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/pgdg.gpg
+}
+
+install_postgres() {
+    >&2 echo -e "########\nInstall Postgres\n########"
+    apt-get update
+    apt-get install -y --no-install-recommends postgresql-common
+    sed -ri 's/#(create_main_cluster) .*$/\1 = false/' /etc/postgresql-common/createcluster.conf
+    apt-get install -y --no-install-recommends "postgresql-15"
+}
+
+install_auto_failover() {
+    >&2 echo -e '########\nInstall pg_auto_failover\n########'
+    apt-get install -y --no-install-recommends pg-auto-failover-cli postgresql-15-auto-failover
+}
+
+install_walg() {
+    >&2 echo -e '########\nInstall wal-g\n########'
+    curl -s -L https://github.com/wal-g/wal-g/releases/download/v2.0.1/wal-g-pg-ubuntu-18.04-amd64 > /usr/local/bin/wal-g
+    chmod +x /usr/local/bin/wal-g
+}
+
+# We need to have locales enabled for postgres
+install_locales() {
+    >&2 echo -e '########\nInstall locales\n########'
+    apt-get update
+    apt-get install -y --no-install-recommends locales
+    localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+}
+
+cleanup() {
+    >&2 echo -e "########\nCleanup\n########"
+    apt-get purge -y --auto-remove apt-transport-https gnupg git
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/log/*
+}
+
+create_postgres_user
+if getent passwd "postgres" &>/dev/null; then
+    echo 'postgres user exists'
+else
+    log_err "the postgres user does not exist."
+fi
+
+prepare_environment
+for dir in \
+        "/var/lib/postgresql" \
+        "/var/run/postgresql" \
+        "/var/lib/postgresql/initdb.d" 
+do
+    if [[ -d "$dir" ]]; then
+        echo "postgres directories exist."
+        else
+            log_err "the postgres directories do not exist."
+    fi
+done
+
+for pkg in \
+        "curl" \
+        "nano" \
+        "pspg" \
+        "procps" \
+        "gosu" \
+        "dnsutils" \
+        "gnupg" \
+        "git" \
+        "ca-certificates"
+do
+    if [[ $(dpkg-query -W -f='${Status}' $pkg 2>/dev/null | grep -c "ok installed") -eq 0 ]] ; then
+        log_info "packages are installed."
+        else
+            log_err "required packages are not installed."
+    fi
+done
+
+add_postgres_repo
+if grep "bullseye-pgdg main 15" /etc/apt/sources.list.d/pgdg.list &>/dev/null; then
+    log_info "postgres repo is added."
+else
+    log_err "the postgres repo has not been added."
+fi
+
+install_postgres
+for pkg in \
+        "postgresql-common" \
+        "postgresql-15"
+do
+    if [[ $(dpkg-query -W -f='${Status}' $pkg 2>/dev/null | grep -c "ok installed") -eq 0 ]] ; then
+        log_info "postgresql packages are installed."
+        else
+            log_err "required postgresql packages are not installed."
+    fi
+done
+
+install_auto_failover
+for pkg in \
+        "pg-auto-failover-cli" \
+        "postgresql-15-auto-failover"
+do
+    if [[ $(dpkg-query -W -f='${Status}' $pkg 2>/dev/null | grep -c "ok installed") -eq 0 ]] ; then
+        log_info "pg auto failover packages are installed."
+        else
+            log_err "required pg auto failover packages are not installed."
+    fi
+done
+
+install_walg
+if [[ -f /usr/local/bin/wal-g ]] ; then
+    log_info "wal-g bin is present."
+else
+    log_err "wal-g is not installed."
+fi
+
+install_locales
+if [[ $(dpkg-query -W -f='${Status}' locales 2>/dev/null | grep -c "ok installed") -eq 0 ]] ; then
+    log_info "locales is installed."
+else
+    log_err "locales is not installed."
+fi
+
+cleanup

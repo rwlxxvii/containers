@@ -1,0 +1,115 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: trivy
+
+on:
+  push:
+    branches: [ "test" ]
+    paths:
+      - vuln-scanning/anchore/Dockerfile
+      - dast/nuclei/Dockerfile
+      - vuln-scanning/terrascan/Dockerfile
+      - vuln-scanning/trivy/Dockerfile
+
+permissions:
+  contents: read
+
+jobs:
+  anchore-trivy-scan:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file anchore/Dockerfile --tag localbuild/anchore:latest
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+      with:
+          image-ref: 'localbuild/anchore:latest'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'anchore-trivy-results.sarif'
+
+  nuclei-trivy-scan:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file nuclei/Dockerfile --tag localbuild/nuclei:latest
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+      with:
+          image-ref: 'localbuild/nuclei:latest'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'nuclei-trivy-results.sarif'
+
+  terrascan-trivy-scan:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file terrascan/Dockerfile --tag localbuild/terrascan:latest
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+      with:
+          image-ref: 'localbuild/terrascan:latest'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'terrascan-trivy-results.sarif'
+
+  trivy-trivy-scan:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file trivy/Dockerfile --tag localbuild/trivy:latest
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+      with:
+          image-ref: 'localbuild/trivy:latest'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-trivy-results.sarif'

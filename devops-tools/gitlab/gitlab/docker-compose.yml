@@ -6,15 +6,20 @@ volumes:
   gitlab-data:
   gitlab-data-backups:
   gitlab-postgres-backups:
-  
+
 networks:
   scm-dev:
-    name: scm-dev
-    driver: bridge
-    
+  
+x-common-vars-apps: &common-vars-apps
+  networks:
+    - scm-dev
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+
 services:
   redis:
-    restart: always
+    <<: *common-vars-apps
     image: docker.io/redis:alpine
     command:
       - --loglevel warning
@@ -28,8 +33,16 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 248M
 
   postgres:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:14
     container_name: postgres
     hostname: postgres-gitlab.io
@@ -50,15 +63,19 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
-    restart: unless-stopped
-    networks:
-      - scm-dev
-      
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+
   gitlab:
+    <<: *common-vars-apps
     image: docker.io/gitlab/gitlab-ce:latest
     container_name: gitlab-ce
     hostname: gitlab.main.dev
-    restart: unless-stopped
     volumes:
       - gitlab-data:/home/git/data:z
     environment:
@@ -181,10 +198,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - scm-dev
-
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+          
   backups:
+    <<: *common-vars-apps
     image: docker.io/bitnami/postgresql:14
     container_name: gitlab-psql-backup
     hostname: gitlab-psql-backup.io
@@ -214,12 +241,10 @@ services:
       POSTGRESQL_REPLICATION_MODE: slave
       POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
-      POSTGRESQL_MASTER_HOST: postgres
-      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_MASTER_HOST: postgres-gitlab.io
       POSTGRESQL_MASTER_PORT_NUMBER: ${DB_PORT}
     ports:
       - ${DB_PORT}:${DB_PORT}
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -231,5 +256,10 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
-    networks:
-      - scm-dev
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M

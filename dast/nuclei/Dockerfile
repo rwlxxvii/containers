@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 # nuclei: Fast and customizable vulnerability scanner based on simple YAML based DSL.
 ARG repo="docker.io" \
-    base_image="alpine:edge" \
-    image_hash="3e44438281baf26907675b99c9a4a421c4d4a57c954120327e703aa8329086bd"
+    base_image="alpine:3.19" \
+    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -13,7 +13,7 @@ LABEL \
     org.opencontainers.image.url='https://projectdiscovery.io/#/' \
     org.opencontainers.image.vendor='Project Discovery' \
     org.opencontainers.image.licenses='MIT' \
-    org.opencontainers.image.schema-version='3.1.0'
+    org.opencontainers.image.schema-version='3.1.5'
     
 RUN \
     apk add --no-cache \
@@ -25,7 +25,7 @@ RUN \
 FROM base AS go-builder
 
 ENV GOPATH=/usr/local/bin/go \
-    VER=3.1.0 \
+    VER=3.1.5 \
     SNYK_API=
 
 RUN \

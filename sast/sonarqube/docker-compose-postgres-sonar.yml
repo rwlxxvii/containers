@@ -16,15 +16,22 @@ networks:
       config:
         - subnet: ${SONARQUBE_SUBNET}
           gateway: ${SONARQUBE_GATEWAY}
-          
+  traefik:
+    external: true
+
+x-common-vars-apps: &common-vars-apps
+  security_opt:
+    - no-new-privileges:true
+  restart: on-failure
+  env_file:
+    - .env
+
 services:
   postgres:
+    <<: *common-vars-apps
     image: ${POSTGRESQL_IMAGE}
     container_name: ${POSTGRESQL_CONTAINER_NAME}
     hostname: ${POSTGRESQL_HOSTNAME}
-    security_opt:
-      - no-new-privileges:true
-    restart: unless-stopped
     ports:
       - 5432:5432
     environment:
@@ -47,10 +54,16 @@ services:
     networks:
       sonarnet:
         ipv4_address: ${POSTGRES_IPv4}
-    #depends_on:
-    #  - traefik
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
     
   sonarqube:
+    <<: *common-vars-apps
     image: ${SONARQUBE_IMAGE}
     container_name: ${SONARQUBE_CONTAINER_NAME}
     hostname: ${SONARQUBE_HOSTNAME}
@@ -77,39 +90,55 @@ services:
       nofile:
         soft: 65536
         hard: 131072
-    depends_on:
       postgres:
         condition: service_healthy
-      #traefik:
+      traefik:
+        condition: service_healthy
     networks:
       sonarnet:
         ipv4_address: ${SONARQUBE_IPv4}
-    #labels:
-      #- "traefik.enable=true"
-      #- "traefik.http.routers.sonarqube.rule=Host(`sonarqube.io`)"
-      #- "traefik.http.routers.sonarqube.service=sonarqube"
-      #- "traefik.http.routers.sonarqube.entrypoints=websecure"
-      #- "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
-      #- "traefik.http.routers.sonarqube.tls=true"
-      #- "traefik.http.routers.sonarqube.tls.certresolver=letsencrypt"
-      #- "traefik.http.services.sonarqube.loadbalancer.passhostheader=true"
-      #- "traefik.http.routers.sonarqube.middlewares=compresstraefik"
-      #- "traefik.http.middlewares.compresstraefik.compress=true"
+      traefik:
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.sonarqube.rule=Host(`sonarqube.io`)"
+        - "traefik.http.routers.sonarqube.service=sonarqube"
+        - "traefik.http.routers.sonarqube.entrypoints=websecure"
+        - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
+        - "traefik.http.routers.sonarqube.tls=true"
+        - "traefik.http.routers.sonarqube.tls.certresolver=letsencrypt"
+        - "traefik.http.services.sonarqube.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.sonarqube.middlewares=compresstraefik"
+        - "traefik.http.middlewares.compresstraefik.compress=true"
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
 
   backups:
+    <<: *common-vars-apps
     image: ${POSTGRESQL_IMAGE}
     container_name: ${BACKUP_POSTGRESQL_CONTAINER_NAME}
-    hostname: ${BACKUP_POSTGRESQ_HOSTNAME}
-    command: sh -c 'sleep 30m
-             && while true; do
-             PGPASSWORD="$$(echo $$POSTGRESQL_PASSWORD)"
-             pg_dump
-             -h postgres-sonarqube.io
-             -p 5432
-             -d "${POSTGRESQL_DATABASE}"
-             -U "${POSTGRESQL_USERNAME} | gzip > /srv/sonarqube-postgres/backups/sonarqube-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
-             && find /srv/sonarqube-postgres/backups -type f -mtime +7 | xargs rm -f;
-             sleep 24h; done'
+    hostname: ${BACKUP_POSTGRESQL_HOSTNAME}
+    command: 
+      - sh
+      - -c
+      - |
+        sleep 30m
+        && while true; do
+        pg_dump
+        -h postgres-sonarqube.io
+        -p 5432
+        -d "${POSTGRESQL_DATABASE}"
+        -U "${POSTGRESQL_USERNAME} | gzip > /srv/sonarqube-postgres/backups/sonarqube-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
+        && find /srv/sonarqube-postgres/backups -type f -mtime +7 | xargs rm -f;
+        sleep 24h; done
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - sonarqube-db:/bitnami/postgresql:z
@@ -118,12 +147,10 @@ services:
       POSTGRESQL_REPLICATION_MODE: slave
       POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
-      POSTGRESQL_MASTER_HOST: postgres
-      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_MASTER_HOST: ${POSTGRESQL_HOSTNAME}
       POSTGRESQL_MASTER_PORT_NUMBER: 5432
     ports:
       - 5432:5432
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -138,3 +165,10 @@ services:
     networks:
       sonarnet:
         ipv4_address: ${BACKUP_POSTGRESQL_IPv4}
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M

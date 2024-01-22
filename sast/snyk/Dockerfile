@@ -1,4 +1,4 @@
-FROM docker.io/alpine:3.18
+FROM docker.io/alpine:3.19
 
 # url with main/master branch of code to scan
 ARG URL
@@ -30,7 +30,7 @@ SHELL ["/bin/bash", "-c"]
 
 RUN \
     apk add --no-cache -t .snyk-deps ca-certificates npm unzip wget; \
-    wget --progress=bar:force ${URL} -O codebase.zip; \
+    wget ${URL} -O codebase.zip; \
     unzip codebase.zip; \
     echo -e $'for d in ./*/; do \n\
       if [[ $d =~ (master|main)[0-9]? ]]; then \n\
