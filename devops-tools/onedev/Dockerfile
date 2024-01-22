@@ -18,8 +18,8 @@ RUN \
 
 FROM base AS download
 
-ENV URL="https://code.onedev.io/~downloads/projects/160/builds/4442/artifacts/onedev-9.4.3.zip" \
-    SHA="280ddef0d394e2ae15c10e41337646ce6d231a619d1c131f3f4a59436bc9dcc2"
+ENV URL="https://code.onedev.io/~downloads/projects/160/builds/4506/artifacts/onedev-9.7.0.zip" \
+    SHA="1d7e18f435c1f79d84ac335c4b351f8fb5df7e21c0630739e31851d504eebc6d"
     
 RUN \
     apk add --no-cache -t .onedev-download wget unzip; \
@@ -32,13 +32,13 @@ RUN \
 FROM base
 
 ENV PATH="${PATH}:/usr/lib/jvm/java-17-openjdk/bin/" \
-    VER="9.4.3"
+    VER="9.7.0"
 
 LABEL org.opencontainers.image.name='OneDev' \
       org.opencontainers.image.description='Self-hosted Git Server with CI/CD and Kanban.' \
       org.opencontainers.image.usage='https://docs.onedev.io' \
       org.opencontainers.image.url='https://onedev.io' \
-      org.opencontainers.image.schema-version='9.4.3'
+      org.opencontainers.image.schema-version='9.7.0'
 
 RUN \
     addgroup -g 1001 onedev; \
