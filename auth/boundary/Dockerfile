@@ -2,7 +2,7 @@
 # boundary: provides access to applications and critical systems with fine-grained authorizations without managing credentials or exposing your network.
 ARG repo="docker.io" \
     base_image="alpine:3.19" \
-    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
+    image_hash="6457d53fb065d6f250e1504b9bc42d5b6c65941d57532c072d929dd0628977d0"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -20,7 +20,7 @@ RUN \
 
 FROM base AS build-env
 
-ENV PRODUCT_VERSION=0.14.2 \
+ENV PRODUCT_VERSION=0.15.0 \
     GPG_KEY=C874011F0AB405110D02105534365D9472D7468F \
     SNYK_API=
     
@@ -88,7 +88,7 @@ LABEL org.opencontainers.image.name='Hashicorp Boundary' \
     org.opencontainers.image.url='https://www.boundaryproject.io/' \
     org.opencontainers.image.vendor='Hashicorp' \
     org.opencontainers.image.licenses='Mozilla Public License 2.0' \
-    org.opencontainers.image.schema-version='0.14.2' \
+    org.opencontainers.image.schema-version='0.15.0' \
     MAINTAINER="@rw"
     
 RUN \

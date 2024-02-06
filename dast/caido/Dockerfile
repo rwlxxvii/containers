@@ -12,7 +12,7 @@ LABEL org.opencontainers.image.name='Caido' \
       org.opencontainers.image.usage='https://docs.caido.io/user_guide' \
       org.opencontainers.image.url='https://caido.io/' \
       org.opencontainers.image.vendor='Caido' \
-      org.opencontainers.image.schema-version='0.29.2' \
+      org.opencontainers.image.schema-version='0.30.4' \
       MAINTAINER="@rw"
       
 RUN \

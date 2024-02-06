@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 # deeplake: Database for AI powered by a storage format optimized for deep-learning applications.
 ARG repo="docker.io" \
-    base_image="alpine:3.18" \
-    image_hash="48d9183eb12a05c99bcc0bf44a003607b8e941e1d4f41f9ad12bdcc4b5672f86"
+    base_image="alpine:3.19" \
+    image_hash="6457d53fb065d6f250e1504b9bc42d5b6c65941d57532c072d929dd0628977d0"
     
 FROM ${repo}/${base_image}@sha256:${image_hash}
 
