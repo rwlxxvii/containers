@@ -12,7 +12,7 @@ LABEL org.opencontainers.image.name='SonarQube' \
     org.opencontainers.image.url='https://www.sonarsource.com/products/sonarqube/' \
     org.opencontainers.image.licenses='GNU Lesser General Public License v3.0' \
     org.opencontainers.image.vendor='Sonar' \
-    org.opencontainers.image.schema-version='10.3.0.82913' \
+    org.opencontainers.image.schema-version='10.4.0.87286' \
     MAINTAINER="@rw"
 
 ENV LANG='en_US.UTF-8' \
@@ -30,7 +30,7 @@ RUN apk add --no-cache \
 
 FROM base AS builder
 
-ARG SONARQUBE_VERSION='10.3.0.82913'
+ARG SONARQUBE_VERSION='10.4.0.87286'
 ARG SONARQUBE_ZIP_URL='https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-${SONARQUBE_VERSION}.zip'
 ENV JAVA_HOME='/usr/lib/jvm/java-17-openjdk' \
     SONARQUBE_HOME='/opt/sonarqube' \
