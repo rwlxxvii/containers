@@ -2,11 +2,11 @@
 # zeek: A powerful network analysis framework that is much different from the typical IDS you may know. 
 ARG repo="docker.io" \
     base_image="alpine:3.19" \
-    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
+    image_hash="6457d53fb065d6f250e1504b9bc42d5b6c65941d57532c072d929dd0628977d0"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS build-env
 
-ENV VER=6.0.1 \
+ENV VER=6.1.1 \
     AF_PACKET_VERSION=4.0.0 \
     BUILD_PROCS=2
 
@@ -71,7 +71,7 @@ LABEL org.opencontainers.image.name='Zeek' \
     org.opencontainers.image.url='https://zeek.org/' \
     org.opencontainers.image.licenses='The Regents of the University of California' \
     org.opencontainers.image.vendor='The Zeek Project' \
-    org.opencontainers.image.schema-version='6.0.1' \
+    org.opencontainers.image.schema-version='6.1.1' \
     MAINTAINER="@rw"
 
 RUN apk --no-cache add \
