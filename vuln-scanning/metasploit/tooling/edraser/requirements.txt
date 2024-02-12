@@ -3,3 +3,4 @@ mysql_connector_repackaged==0.3.1
 psutil==5.8.0
 pywin32==304
 Requests==2.31.0
+dnspython>=2.6.0rc1 # not directly required, pinned by Snyk to avoid a vulnerability
