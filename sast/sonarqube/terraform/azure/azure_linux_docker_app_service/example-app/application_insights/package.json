@@ -9,6 +9,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "applicationinsights": "^1.8.8"
+    "applicationinsights": "^1.8.10"
   }
 }
