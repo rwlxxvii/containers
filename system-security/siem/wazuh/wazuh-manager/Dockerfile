@@ -1,5 +1,5 @@
 # Wazuh Docker Copyright (C) 2017, Wazuh Inc. (License GPLv2)
-FROM ubuntu:jammy
+FROM ubuntu:22.04
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
