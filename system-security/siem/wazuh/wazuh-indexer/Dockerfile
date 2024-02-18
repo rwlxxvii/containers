@@ -1,5 +1,5 @@
 # Wazuh Docker Copyright (C) 2017, Wazuh Inc. (License GPLv2)
-FROM ubuntu:jammy AS builder
+FROM ubuntu:22.04 AS builder
 
 ARG WAZUH_VERSION
 ARG WAZUH_TAG_REVISION
@@ -28,7 +28,7 @@ RUN bash config.sh
 # Copy wazuh-indexer from stage 0
 # Add entrypoint
 ################################################################################
-FROM ubuntu:jammy
+FROM ubuntu:22.04
 
 ENV USER="wazuh-indexer" \
     GROUP="wazuh-indexer" \
