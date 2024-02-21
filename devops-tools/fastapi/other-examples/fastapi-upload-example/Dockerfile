@@ -1,4 +1,4 @@
-FROM python:3.13.0a2-slim-bullseye
+FROM python:3.13.0a4-slim-bullseye
 
 COPY requirements.txt /requirements.txt
 RUN pip install -r requirements.txt
