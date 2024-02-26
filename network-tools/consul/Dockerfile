@@ -23,7 +23,7 @@ RUN \
 
 FROM base as build-env
 
-ENV CONSUL_VER=1.17.0 \
+ENV CONSUL_VER=1.17.3 \
     CONSUL_GPGKEY=C874011F0AB405110D02105534365D9472D7468F \
     SNYK_API=
     
@@ -96,7 +96,7 @@ LABEL org.opencontainers.image.name='Hashicorp Consul' \
     org.opencontainers.image.url='https://www.hashicorp.com/products/consul' \
     org.opencontainers.image.vendor='Hashicorp' \
     org.opencontainers.image.licenses='Mozilla Public License 2.0' \
-    org.opencontainers.image.schema-version='1.17.0' \
+    org.opencontainers.image.schema-version='1.17.3' \
     MAINTAINER="@rw"
     
 RUN \

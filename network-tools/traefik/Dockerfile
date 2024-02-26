@@ -5,6 +5,8 @@ ARG repo="docker.io" \
 
 FROM ${repo}/${base_image}@sha256:${image_hash} AS bin-download
 
+ARG TRAEFIK_VER=2.11.0
+
 RUN \
     apk --no-cache add \
         ca-certificates \
@@ -17,7 +19,7 @@ RUN \
 		s390x) arch='s390x' ;; \
 		*) echo >&2 "error: unsupported architecture: $apkArch"; exit 1 ;; \
 	esac; \
-	wget --quiet -O /tmp/traefik.tar.gz "https://github.com/traefik/traefik/releases/download/v2.10.7/traefik_v2.10.7_linux_$arch.tar.gz"; \
+	wget --quiet -O /tmp/traefik.tar.gz "https://github.com/traefik/traefik/releases/download/v${TRAEFIK_VER}/traefik_v${TRAEFIK_VER}_linux_$arch.tar.gz"; \
 	tar xzvf /tmp/traefik.tar.gz -C /usr/local/bin traefik; \
 	rm -f /tmp/traefik.tar.gz
 
