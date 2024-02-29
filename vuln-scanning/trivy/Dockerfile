@@ -2,12 +2,12 @@
 # trivy: is a comprehensive and versatile security scanner.
 ARG repo="docker.io" \
     base_image="alpine:3.19" \
-    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
+    image_hash="6457d53fb065d6f250e1504b9bc42d5b6c65941d57532c072d929dd0628977d0"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS build-env
 
 ENV GOPATH=/usr/local/bin/go \
-    VER=0.48.3 \
+    VER=0.49.1 \
     SNYK_API=
 
 # clone go app, run snyk scans, install
@@ -45,7 +45,7 @@ LABEL \
     org.opencontainers.image.url='https://www.aquasec.com/products/trivy/' \
     org.opencontainers.image.licenses='Apache License 2.0' \
     org.opencontainers.image.vendor='Aqua Security' \
-    org.opencontainers.image.schema-version='0.48.3' \
+    org.opencontainers.image.schema-version='0.49.1' \
     MAINTAINER="@rw"
     
 RUN \

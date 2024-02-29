@@ -2,7 +2,7 @@
 # vault: Secure, store, and tightly control access to tokens, passwords, certificates, and encryption keys for protecting secrets and other sensitive data using a UI, CLI, or HTTP API.
 ARG repo="docker.io" \
     base_image="alpine:3.19" \
-    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
+    image_hash="6457d53fb065d6f250e1504b9bc42d5b6c65941d57532c072d929dd0628977d0"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -18,7 +18,7 @@ RUN \
 
 FROM base AS build-env
 
-ENV VAULT_VER=1.15.2 \
+ENV VAULT_VER=1.15.5 \
     VAULT_GPGKEY=C874011F0AB405110D02105534365D9472D7468F \
     SNYK_API=
     
@@ -87,7 +87,7 @@ LABEL org.opencontainers.image.name='Hashicorp Vault' \
     org.opencontainers.image.url='https://www.hashicorp.com/products/vault' \
     org.opencontainers.image.vendor='Hashicorp' \
     org.opencontainers.image.licenses='Mozilla Public License 2.0' \
-    org.opencontainers.image.schema-version='1.15.2' \
+    org.opencontainers.image.schema-version='1.15.5' \
     MAINTAINER="@rw"
     
 RUN \

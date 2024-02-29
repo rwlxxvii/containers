@@ -3,7 +3,7 @@
 # grype: A vulnerability scanner for container images and filesystems.
 ARG repo="docker.io" \
     base_image="alpine:3.19" \
-    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
+    image_hash="6457d53fb065d6f250e1504b9bc42d5b6c65941d57532c072d929dd0628977d0"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -14,12 +14,12 @@ LABEL \
     org.opencontainers.image.url='https://anchore.com/opensource/' \
     org.opencontainers.image.vendor='Anchore' \
     org.opencontainers.image.licenses='Apache License 2.0' \
-    org.opencontainers.image.schema-version='Grype 0.74.0, Syft 0.100.0'
+    org.opencontainers.image.schema-version='Grype 0.74.6, Syft 1.0.0'
 
 FROM base AS go-builder
 
-ENV SYFT_VER=0.100.0 \
-    GRYPE_VER=0.74.0 \
+ENV SYFT_VER=1.0.0 \
+    GRYPE_VER=0.74.7 \
     GOPATH=/usr/local/bin/go \
     SNYK_API=
 

@@ -1,6 +1,6 @@
 # fluentd/Dockerfile
 
-FROM fluent/fluentd:edge-debian
+FROM fluent/fluentd:v1.16-debian-1
 USER root
 RUN ["gem", "install", "fluent-plugin-elasticsearch", "--no-document", "--version", "5.2.4"]
 RUN ["gem", "install", "fluent-plugin-logdna", "--no-document", "--version", "0.4.0"]
