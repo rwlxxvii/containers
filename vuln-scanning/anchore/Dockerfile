@@ -14,12 +14,12 @@ LABEL \
     org.opencontainers.image.url='https://anchore.com/opensource/' \
     org.opencontainers.image.vendor='Anchore' \
     org.opencontainers.image.licenses='Apache License 2.0' \
-    org.opencontainers.image.schema-version='Grype 0.74.6, Syft 0.105.0'
+    org.opencontainers.image.schema-version='Grype 0.74.6, Syft 1.0.0'
 
 FROM base AS go-builder
 
-ENV SYFT_VER=0.105.0 \
-    GRYPE_VER=0.74.6 \
+ENV SYFT_VER=1.0.0 \
+    GRYPE_VER=0.74.7 \
     GOPATH=/usr/local/bin/go \
     SNYK_API=
 

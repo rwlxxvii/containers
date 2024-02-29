@@ -7,7 +7,7 @@ ARG repo="docker.io" \
 FROM ${repo}/${base_image}@sha256:${image_hash} AS build-env
 
 ENV GOPATH=/usr/local/bin/go \
-    TERRA_VER=1.18.11 \
+    TERRA_VER=1.18.12 \
     SNYK_API=
 
 RUN \

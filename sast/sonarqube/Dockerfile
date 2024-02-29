@@ -13,7 +13,7 @@ LABEL \
     org.opencontainers.image.url='https://www.sonarsource.com/products/sonarqube/' \
     org.opencontainers.image.licenses='GNU Lesser General Public License v3.0' \
     org.opencontainers.image.vendor='Sonar' \
-    org.opencontainers.image.schema-version='10.4.0.87286'
+    org.opencontainers.image.schema-version='10.4.1.88267'
 
 COPY --chmod=755 el9-container-hardening.sh .
     
@@ -27,7 +27,7 @@ RUN \
 
 FROM base AS builder
 
-ARG SONARQUBE_VERSION="10.4.0.87286"
+ARG SONARQUBE_VERSION="10.4.1.88267"
 ARG SONARQUBE_ZIP_URL="https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-${SONARQUBE_VERSION}.zip"
     
 ENV JAVA_HOME="/usr/lib/jvm/jre-17-openjdk" \
