@@ -2,7 +2,7 @@
 # It was designed to evaluate web application security solutions, such as API security proxies, Web Application Firewalls, IPS, API gateways, and others.
 ARG repo="docker.io" \
     base_image="alpine:3.19" \
-    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
+    image_hash="6457d53fb065d6f250e1504b9bc42d5b6c65941d57532c072d929dd0628977d0"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS build-env
 
@@ -10,13 +10,14 @@ ENV GOPATH=/usr/local/bin/go \
     SNYK_API
 
 RUN \
-    apk add --no-cache -t .gotestwaf-deps gcc \
-                                            git \
-                                            make \
-                                            linux-headers \
-                                            musl-dev \
-                                            go \
-                                            npm; \
+    apk add --no-cache -t .gotestwaf-deps \
+        gcc \
+        git \
+        make \
+        linux-headers \
+        musl-dev \
+        go \
+        npm; \
     mkdir -p ${GOPATH}/src/github.com/gotestwaf; \
     cd ${GOPATH}/src/github.com/gotestwaf; \
     git clone https://github.com/wallarm/gotestwaf.git; \
@@ -36,16 +37,17 @@ RUN \
     apk del --purge .gotestwaf-deps; \
     rm -rf ${GOPATH}/src/github.com
     
-FROM ${base_image}
+FROM ${repo}/${base_image}@sha256:${image_hash}
 
 RUN \
-    apk add --no-cache tini \
-                        chromium \
-                        font-inter \
-                        font-iosevka \
-                        fontconfig \
-                        clamav \
-                        freshclam; \
+    apk add --no-cache \
+        tini \
+        chromium \
+        font-inter \
+        font-iosevka \
+        fontconfig \
+        clamav \
+        freshclam; \
     addgroup -g 65535 gotestwaf; \
     adduser --shell /sbin/nologin --disabled-password -h /home/gotestwaf --uid 65535 --ingroup gotestwaf gotestwaf; \
     fc-cache -fv; \

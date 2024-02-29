@@ -2,7 +2,7 @@
 # onedev: Self-hosted Git Server with CI/CD and Kanban.
 ARG repo="docker.io" \
     base_image="alpine:3.19" \
-    image_hash="13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd"
+    image_hash="6457d53fb065d6f250e1504b9bc42d5b6c65941d57532c072d929dd0628977d0"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -18,8 +18,8 @@ RUN \
 
 FROM base AS download
 
-ENV URL="https://code.onedev.io/~downloads/projects/160/builds/4442/artifacts/onedev-9.4.3.zip" \
-    SHA="280ddef0d394e2ae15c10e41337646ce6d231a619d1c131f3f4a59436bc9dcc2"
+ENV URL="https://code.onedev.io/~downloads/projects/160/builds/4723/artifacts/onedev-10.1.6.zip" \
+    SHA="1d9741b950d0f1852864b6e73ce844cb444f11d152b0d735766d87dd109b06bd"
     
 RUN \
     apk add --no-cache -t .onedev-download wget unzip; \
@@ -32,13 +32,13 @@ RUN \
 FROM base
 
 ENV PATH="${PATH}:/usr/lib/jvm/java-17-openjdk/bin/" \
-    VER="9.4.3"
+    VER="10.1.6"
 
 LABEL org.opencontainers.image.name='OneDev' \
       org.opencontainers.image.description='Self-hosted Git Server with CI/CD and Kanban.' \
       org.opencontainers.image.usage='https://docs.onedev.io' \
       org.opencontainers.image.url='https://onedev.io' \
-      org.opencontainers.image.schema-version='9.4.3'
+      org.opencontainers.image.schema-version='10.1.6'
 
 RUN \
     addgroup -g 1001 onedev; \

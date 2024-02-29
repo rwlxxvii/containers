@@ -3,7 +3,7 @@
 
 ARG repo="quay.io/almalinuxorg" \
     base_image="9-minimal" \
-    image_hash="dbe9e629bda941bbc557666cb8fcc184b0ce40e92eaff66eaca2aefde9e5ac35"
+    image_hash="bc83a80849984abca9a46d50cb163d2cd30255fd37485bc294bf817897ed7c26"
 
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -12,7 +12,7 @@ LABEL org.opencontainers.image.name='Caido' \
       org.opencontainers.image.usage='https://docs.caido.io/user_guide' \
       org.opencontainers.image.url='https://caido.io/' \
       org.opencontainers.image.vendor='Caido' \
-      org.opencontainers.image.schema-version='0.29.2' \
+      org.opencontainers.image.schema-version='0.30.4' \
       MAINTAINER="@rw"
       
 RUN \

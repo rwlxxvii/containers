@@ -2,18 +2,18 @@
 # suricata: a high performance, open source network analysis and threat detection software.
 ARG repo="quay.io/almalinuxorg" \
     base_image="9-minimal" \
-    image_hash="dbe9e629bda941bbc557666cb8fcc184b0ce40e92eaff66eaca2aefde9e5ac35"
+    image_hash="bc83a80849984abca9a46d50cb163d2cd30255fd37485bc294bf817897ed7c26"
 
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
 LABEL \
     org.opencontainers.image.name='Suricata' \
     org.opencontainers.image.description='Suricata is a high performance, open source network analysis and threat detection software.' \
-    org.opencontainers.image.usage='https://suricata.readthedocs.io/en/suricata-7.0.1/' \
+    org.opencontainers.image.usage='https://suricata.readthedocs.io/en/suricata-7.0.3/' \
     org.opencontainers.image.url='https://suricata.io/' \
     org.opencontainers.image.licenses='GNU General Public License v2.0' \
     org.opencontainers.image.vendor='The Open Information Security Foundation (OISF)' \
-    org.opencontainers.image.schema-version='7.0.2'
+    org.opencontainers.image.schema-version='7.0.3'
     
 # base dependencies for runtime
 RUN \
@@ -62,7 +62,7 @@ RUN \
 
 FROM base AS build-env
 
-ARG VERSION=7.0.2
+ARG VERSION=7.0.3
 #ENV SNYK_API=
 
 RUN \

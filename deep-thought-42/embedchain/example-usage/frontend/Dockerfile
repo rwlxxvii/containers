@@ -1,4 +1,4 @@
-FROM node:20.8-bookworm-slim AS frontend
+FROM node:20.11-bookworm-slim AS frontend
 
 WORKDIR /usr/src/app/frontend
 COPY package.json .

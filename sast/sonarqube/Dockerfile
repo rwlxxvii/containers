@@ -2,7 +2,7 @@
 # sonarqube: clean code for teams and enterprises.
 ARG repo="quay.io/almalinuxorg" \
     base_image="9-minimal" \
-    image_hash="dbe9e629bda941bbc557666cb8fcc184b0ce40e92eaff66eaca2aefde9e5ac35"
+    image_hash="bc83a80849984abca9a46d50cb163d2cd30255fd37485bc294bf817897ed7c26"
 
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
@@ -13,7 +13,7 @@ LABEL \
     org.opencontainers.image.url='https://www.sonarsource.com/products/sonarqube/' \
     org.opencontainers.image.licenses='GNU Lesser General Public License v3.0' \
     org.opencontainers.image.vendor='Sonar' \
-    org.opencontainers.image.schema-version='10.3.0.82913'
+    org.opencontainers.image.schema-version='10.4.1.88267'
 
 COPY --chmod=755 el9-container-hardening.sh .
     
@@ -27,7 +27,7 @@ RUN \
 
 FROM base AS builder
 
-ARG SONARQUBE_VERSION="10.3.0.82913"
+ARG SONARQUBE_VERSION="10.4.1.88267"
 ARG SONARQUBE_ZIP_URL="https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-${SONARQUBE_VERSION}.zip"
     
 ENV JAVA_HOME="/usr/lib/jvm/jre-17-openjdk" \

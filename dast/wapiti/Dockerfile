@@ -2,7 +2,7 @@
 # wapiti: Audit the security of your websites or web applications.
 ARG repo="quay.io/almalinuxorg" \
     base_image="9-minimal" \
-    image_hash="b394fe1118d30b9659076dd4cf3e1bcbd144a19da5b4656e282ed605a499c4bb"
+    image_hash="bc83a80849984abca9a46d50cb163d2cd30255fd37485bc294bf817897ed7c26"
     
 FROM ${repo}/${base_image}@sha256:${image_hash} AS base
 
