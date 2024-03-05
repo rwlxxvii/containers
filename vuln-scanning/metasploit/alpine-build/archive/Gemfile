@@ -13,7 +13,7 @@ group :development do
   # Markdown formatting for yard
   gem 'redcarpet'
   # generating documentation
-  gem 'yard'
+  gem 'yard', '>= 0.9.35'
   # for development and testing purposes
   gem 'pry-byebug'
   # Ruby Debugging Library - rebuilt and included by default from Ruby 3.1 onwards.
