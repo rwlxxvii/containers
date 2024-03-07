@@ -1,5 +1,5 @@
 # Wazuh Docker Copyright (C) 2017, Wazuh Inc. (License GPLv2)
-FROM ubuntu:focal
+FROM ubuntu:20.04
 
 RUN apt-get update && apt-get install openssl curl -y
 
