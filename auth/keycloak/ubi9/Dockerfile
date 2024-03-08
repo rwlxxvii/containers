@@ -17,11 +17,11 @@ ARG GOMPLATE_VERSION \
     SNYK_API=" "
     
     # renovate: datasource=github-releases depName=hairyhenderson/gomplate
-ENV GOMPLATE_VERSION="${GOMPLATE_VERSION:-v3.11.5}" \
+ENV GOMPLATE_VERSION="${GOMPLATE_VERSION:-v3.11.7}" \
     # renovate: datasource=github-releases depName=thegeeklab/wait-for
     WAIT_FOR_VERSION="${WAIT_FOR_VERSION:-v0.4.2}" \
     # renovate: datasource=github-releases depName=sventorben/keycloak-restrict-client-auth
-    RESTRICT_CLIENT_AUTH_VERSION="${RESTRICT_CLIENT_AUTH_VERSION:-v22.0.0}"
+    RESTRICT_CLIENT_AUTH_VERSION="${RESTRICT_CLIENT_AUTH_VERSION:-v24.0.0}"
 
 RUN microdnf install -y \
         tar \
