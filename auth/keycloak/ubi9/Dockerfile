@@ -3,10 +3,10 @@
 # additional security configurations applied via "el9-container-hardening.sh", final stage runs a malware scan during build time.
 # snyk source code review and dependency checks, you will need a snyk account and use your api key.
 # STIG benchmarks validate configurations are applied, with reports found in /artifacts
-ARG fetcher_image="registry.access.redhat.com/ubi9/ubi-minimal:9.3-1361.1699548032" \
-    fetcher_hash="3e313209ac617a92b50350286752311d99ea2dafc429ef0e5311889294b0bc21" \
-    keycloak_image="quay.io/keycloak/keycloak:22.0.5" \
-    keycloak_hash="bad320e60a7fadfa36e37ccc56af3d50d0f4001c469cd2a7b363341480593a2b"
+ARG fetcher_image="registry.access.redhat.com/ubi9/ubi-minimal:9.3-1612" \
+    fetcher_hash="bc552efb4966aaa44b02532be3168ac1ff18e2af299d0fe89502a1d9fabafbc5" \
+    keycloak_image="quay.io/keycloak/keycloak:24.0.1" \
+    keycloak_hash="8e38bc8a4e0606e38a37401422dfbf414e2b73797952dfe94c9b56e2f9207897"
     
 FROM ${fetcher_image}@sha256:${fetcher_hash} as fetcher
 

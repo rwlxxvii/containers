@@ -18,7 +18,7 @@ RUN \
 
 FROM base AS build-env
 
-ENV VAULT_VER=1.15.5 \
+ENV VAULT_VER=1.15.6 \
     VAULT_GPGKEY=C874011F0AB405110D02105534365D9472D7468F \
     SNYK_API=
     
@@ -87,7 +87,7 @@ LABEL org.opencontainers.image.name='Hashicorp Vault' \
     org.opencontainers.image.url='https://www.hashicorp.com/products/vault' \
     org.opencontainers.image.vendor='Hashicorp' \
     org.opencontainers.image.licenses='Mozilla Public License 2.0' \
-    org.opencontainers.image.schema-version='1.15.5' \
+    org.opencontainers.image.schema-version='1.15.6' \
     MAINTAINER="@rw"
     
 RUN \
