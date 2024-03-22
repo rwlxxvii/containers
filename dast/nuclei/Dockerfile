@@ -13,7 +13,7 @@ LABEL \
     org.opencontainers.image.url='https://projectdiscovery.io/#/' \
     org.opencontainers.image.vendor='Project Discovery' \
     org.opencontainers.image.licenses='MIT' \
-    org.opencontainers.image.schema-version='3.2.1'
+    org.opencontainers.image.schema-version='3.2.2'
     
 RUN \
     apk add --no-cache \
@@ -25,7 +25,7 @@ RUN \
 FROM base AS go-builder
 
 ENV GOPATH=/usr/local/bin/go \
-    VER=3.2.1 \
+    VER=3.2.2 \
     SNYK_API=
 
 RUN \

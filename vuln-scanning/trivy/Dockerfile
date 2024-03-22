@@ -7,7 +7,7 @@ ARG repo="docker.io" \
 FROM ${repo}/${base_image}@sha256:${image_hash} AS build-env
 
 ENV GOPATH=/usr/local/bin/go \
-    VER=0.49.1 \
+    VER=0.50.0 \
     SNYK_API=
 
 # clone go app, run snyk scans, install
@@ -45,7 +45,7 @@ LABEL \
     org.opencontainers.image.url='https://www.aquasec.com/products/trivy/' \
     org.opencontainers.image.licenses='Apache License 2.0' \
     org.opencontainers.image.vendor='Aqua Security' \
-    org.opencontainers.image.schema-version='0.49.1' \
+    org.opencontainers.image.schema-version='0.50.0' \
     MAINTAINER="@rw"
     
 RUN \
